@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسك للتراث الإسلامي - متجر إلكتروني متكامل</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&family=Cairo:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- الهيدر -->
+    <header>
+        <div class="header-container">
+            <div class="mobile-menu-btn" id="menuToggleBtn">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+
+            <ul class="nav-links">
+                <li><a data-target="home-page" class="nav-link-btn active">الرئيسية</a></li>
+                <li><a data-target="products-page" class="nav-link-btn">المنتجات</a></li>
+                <li><a data-target="about-page" class="nav-link-btn">من نحن</a></li>
+                <li><a data-target="contact-page" class="nav-link-btn">تواصل معنا</a></li>
+            </ul>
+
+            <div class="logo-area">
+                <div class="tasbih-container">
+                    <div id="tasbihRing"></div>
+            
+                    <div class="inner-logo-static">
+                        <i class="fa-solid fa-book-open"></i>
+                        <span>مسك<br>التراث</span>
+                    </div>
+            
+                    <div id="tasbihTassel" class="tasbih-tassel"></div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <i class="fa-solid fa-magnifying-glass" id="searchToggleBtn"></i>
+                <i class="fa-solid fa-user"></i>
+                <div class="cart-icon-container" id="cartToggleBtn">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-badge" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- شريط البحث المنبثق -->
+    <div class="search-bar-container" id="searchBarContainer">
+        <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="ابحث عن جلباب، سبحة، مسك...">
+        </div>
+    </div>
+
+    <!-- المنيو الجانبي للموبايل -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="mobileSidebar">
+        <div class="sidebar-header">
+            <h3 style="color: var(--primary-color);">القائمة</h3>
+            <div class="sidebar-close" id="sidebarCloseBtn"><i class="fa-solid fa-xmark"></i></div>
+        </div>
+        <ul class="sidebar-links">
+            <li><a data-target="home-page" class="sidebar-link-btn active">الرئيسية</a></li>
+            <li><a data-target="products-page" class="sidebar-link-btn">المنتجات</a></li>
+            <li><a data-target="about-page" class="sidebar-link-btn">من نحن</a></li>
+            <li><a data-target="contact-page" class="sidebar-link-btn">تواصل معنا</a></li>
+        </ul>
+    </div>
+
+    <!-- كارت السلة الجانبي -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="sidebar-header">
+            <h3 style="color: var(--primary-color);"><i class="fa-solid fa-bag-shopping"
+                    style="margin-left:8px;"></i>سلة التسوق</h3>
+            <div class="sidebar-close" id="cartCloseBtn"><i class="fa-solid fa-xmark"></i></div>
+        </div>
+        <div class="cart-items-container" id="cartItemsList">
+            <p class="empty-cart-msg">السلة فارغة حالياً</p>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>الإجمالي:</span>
+                <span id="cartTotalAmount">0 ج.م</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">إتمام الطلب (واتساب)</button>
+        </div>
+    </div>
+
+    <!-- التنبيه الذكي عند إضافة منتج -->
+    <div class="toast-notification" id="toastNotice">
+        <i class="fa-solid fa-circle-check" style="font-size: 20px; color: var(--accent-color);"></i>
+        <span id="toastMessage">تم إضافة المنتج للسلة بنجاح!</span>
+    </div>
+
+
+    <!-- ==================== محتوى الصفحات ==================== -->
+    <main>
+
+        <!-- 1. صفحة الرئيسية -->
+        <div id="home-page" class="page-view active">
+            <!-- البانر الرئيسي -->
+            <section class="hero-section">
+                <div class="hero-banner">
+                    <div class="hero-content">
+                        <h1>أصالة التراث الإسلامي بين يديك</h1>
+                        <p>اكتشف تشكيلتنا الفاخرة من الجلاليب المريحة، السبح المصنوعة يدويًا، وأجود أنواع المسك الطبيعي
+                            والسواك الطازج.</p>
+                        <a class="hero-btn" id="heroShopNow">
+                            تسوق الآن<i class="fa-solid fa-bag-shopping"></i>
+                        </a>
+                    </div>
+                    <div class="hero-image-container">
+                        <img id="heroBannerImage" src="" alt="Banner">
+                    </div>
+                </div>
+            </section>
+
+            <!-- الأقسام -->
+            <section class="categories-section">
+                <h2 class="section-title">تصفح بالأقسام</h2>
+                <div class="categories-grid" id="homeCategoriesGrid"></div>
+            </section>
+        </div>
+
+        <!-- 2. صفحة المنتجات الكاملة -->
+        <div id="products-page" class="page-view">
+
+            <div class="filter-container" id="productsFilters"></div>
+
+            <section class="products-section" style="margin-top: 10px;">
+                <h2 class="section-title" id="productsPageTitle">كل المنتجات</h2>
+                <div class="products-grid" id="mainProductsGrid"></div>
+                
+                <div id="noResultsMessage" class="no-results">
+                
+                    لا توجد منتجات مطابقة للبحث
+                
+                </div>
+            </section>
+        </div>
+
+        <!-- 3. صفحة من نحن -->
+        <div id="about-page" class="page-view">
+            <div class="about-content">
+                <h2>قصتنا وهويتنا</h2>
+                <p>تأسس متجر "مسك للتراث الإسلامي" ليكون الجسر الذي يربط بين أصالة وعراقة التراث الإسلامي وبين متطلبات
+                    الحياة العصرية الفاخرة.</p>
+                <p>نحن نحرص على اختيار أدق التفاصيل، بدءاً من الأقمشة المريحة والراقية لجلاليبنا، مروراً بالخامات
+                    الطبيعية والنادرة للسبح اليدوية، وحتى استخلاص المسك الأصلي وتقديم السواك الطازج بأعلى معايير الجودة
+                    والاهتمام.</p>
+
+                <div class="features-row">
+                    <div class="feature-box">
+                        <i class="fa-solid fa-gem"></i>
+                        <h3>جودة أصيلة</h3>
+                        <p style="font-size: 13px; margin-top:5px;">منتجات منتقاة بعناية لضمان رضاكم المطلق.</p>
+                    </div>
+                    <div class="feature-box">
+                        <i class="fa-solid fa-truck-fast"></i>
+                        <h3>توصيل سريع</h3>
+                        <p style="font-size: 13px; margin-top:5px;">نشحن لكافة المناطق في أسرع وقت وبأمان.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. صفحة تواصل معنا -->
+        <div id="contact-page" class="page-view">
+            <div class="contact-container">
+                <div class="contact-info-panel">
+                    <h2>يسعدنا تواصلك</h2>
+                    <p style="opacity: 0.9; margin-bottom: 30px;">إذا كان لديك أي استفسار أو طلب خاص، لا تتردد في
+                        الاتصال بنا عبر الوسائل التالية:</p>
+
+                    <div class="contact-info-item">
+                        <i class="fa-solid fa-phone"></i>
+                        <span>01007569287</span>
+                    </div>
+                    <div class="contact-info-item">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span>support@mesk-heritage.com</span>
+                    </div>
+                    <div class="contact-info-item">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>جمهورية مصر العربية</span>
+                    </div>
+                </div>
+
+                <div class="contact-form-panel">
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label>الاسم بالكامل</label>
+                            <input type="text" id="contactName" required placeholder="أدخل اسمك الكريم">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الهاتف</label>
+                            <input type="tel" id="contactPhone" required placeholder="رقم الموبايل">
+                        </div>
+                        <div class="form-group">
+                            <label>رسالتك</label>
+                            <textarea id="contactMessage" rows="4" required
+                                placeholder="اكتب تفاصيل استفسارك هنا..."></textarea>
+                        </div>
+                        <button type="submit" class="send-msg-btn">إرسال الرسالة</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+
+    <!-- الفوتر -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-about">
+                <h2>مسك للتراث الإسلامي</h2>
+                <p style="opacity: 0.8; font-size: 14px; margin-top: 10px;">متجركم الأول لكل ما يخص مستلزمات العبادة،
+                    الأناقة الروحية، والهدايا الإسلامية الفاخرة.</p>
+            </div>
+            <div class="footer-links">
+                <h3>روابط سريعة</h3>
+                <ul>
+                    <li><a class="footer-nav-btn" data-target="products-page">كل المنتجات</a></li>
+                    <li><a class="footer-nav-btn" data-target="about-page">من نحن</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h3>تواصل معنا</h3>
+                <p style="opacity: 0.8; font-size: 14px;"><i class="fa-solid fa-phone" style="margin-left: 8px;"></i>
+                    +20 1007569287</p>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2026 متجر مسك للتراث الإسلامي. جميع الحقوق محفوظة.</div>
+    </footer>
+
+    <!-- زر واتساب العائم برقمك الجديد -->
+    <a href="https://wa.me/201007569287" class="whatsapp-float" target="_blank"><i
+            class="fa-brands fa-whatsapp"></i></a>
+
+    <div id="customerModal" class="customer-modal">
+    
+        <div class="customer-modal-content">
+        
+            <span id="closeCustomerModal" class="close-customer-modal">
+                ×
+            </span>
+        
+            <h3>بيانات العميل</h3>
+    
+            <input type="text" id="customerName" placeholder="الاسم">
+    
+            <input type="tel" id="customerPhone" placeholder="رقم الهاتف">
+    
+            <input type="text" id="customerCity" placeholder="المحافظة">
+    
+            <textarea id="customerAddress" placeholder="العنوان بالتفصيل">
+            </textarea>
+    
+            <button id="sendOrderBtn">
+                إرسال الطلب
+            </button>
+    
+        </div>
+    
+    </div>
+    <div id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

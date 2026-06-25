@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المنتج</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+</head>
+
+<body>
+
+    <div class="product-page-container">
+
+        <div class="product-gallery">
+        
+            <img id="mainProductImage" class="main-product-image">
+        
+            <div id="productThumbnails" class="product-thumbnails">
+        
+            </div>
+        
+        </div>
+
+        <div class="product-details">
+
+            <h1 id="productName"></h1>
+
+            <div id="productPriceBox">
+            
+                <div id="oldPrice" class="old-price-product">
+                </div>
+            
+                <div id="productPrice" class="product-page-price">
+                </div>
+            
+                <div id="discountBadge" class="discount-product">
+                </div>
+            
+            </div>
+            <div id="productStock" class="product-stock">
+            </div>
+            
+            <div id="productCategory" class="product-category">
+            </div>
+
+            <div id="productStock" class="product-stock-page">
+            </div>
+            <p id="productDescription">
+            </p>
+
+            <div class="qty-box">
+            
+                <button id="minusQty">-</button>
+            
+                <span id="qtyValue">1</span>
+            
+                <button id="plusQty">+</button>
+            
+            </div>
+
+            <button id="addProductBtn" class="checkout-btn">
+
+                إضافة للسلة
+
+            </button>
+            
+            <div class="product-actions">
+            
+                <button id="shareProductBtn" class="share-btn">
+            
+                    مشاركة المنتج
+            
+                </button>
+            
+                <button id="copyLinkBtn" class="share-btn">
+            
+                    نسخ الرابط
+            
+                </button>
+            
+            </div>
+
+        </div>
+
+    </div>
+
+    <section class="related-products">
+
+        <h2>منتجات مشابهة</h2>
+
+        <div class="products-grid" id="relatedProducts">
+        </div>
+
+    </section>
+
+    <section class="reviews-section">
+    
+        <h2>تقييمات العملاء</h2>
+    
+        <div id="reviewsSummary"></div>
+    
+        <div id="reviewsList"></div>
+    
+        <div class="add-review-box">
+    
+            <h3>أضف تقييمك</h3>
+    
+            <input type="text" id="reviewName" placeholder="اسمك">
+    
+            <div class="rating-stars">
+            
+                <i class="fa-regular fa-star" data-rating="1"></i>
+            
+                <i class="fa-regular fa-star" data-rating="2"></i>
+            
+                <i class="fa-regular fa-star" data-rating="3"></i>
+            
+                <i class="fa-regular fa-star" data-rating="4"></i>
+            
+                <i class="fa-regular fa-star" data-rating="5"></i>
+            
+            </div>
+    
+            <textarea id="reviewComment" placeholder="اكتب رأيك">
+    </textarea>
+    
+            <button id="submitReviewBtn">
+    
+                إرسال التقييم
+    
+            </button>
+    
+        </div>
+    
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="product.js"></script>
+
+</body>
+
+</html>

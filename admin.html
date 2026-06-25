@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>لوحة التحكم</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+</head>
+
+<body>
+
+    <div class="admin-container">
+
+        <div class="admin-header">
+
+            <h1>
+                لوحة التحكم
+            </h1>
+
+            <button id="addProductBtn">
+                + إضافة منتج
+            </button>
+
+            <button id="bannerManagerBtn" class="icon-btn" type="button" title="إدارة البانر">
+                <i class="fa-solid fa-images"></i>
+            </button>
+            
+            <button id="addCategoryBtn">                           
+                +  الأقسام
+            </button>
+
+            <input type="text" id="adminSearch" class="admin-search" placeholder="ابحث عن منتج...">
+
+        </div>
+        <div id="productModal" class="product-modal">
+        
+            <div class="product-modal-content">
+                
+                <span class="close-modal">
+                
+                    ×
+                
+                </span>
+                <h2>إضافة منتج جديد</h2>
+
+                <div id="mainImagePreview">
+                </div>
+                <input type="text" id="productName" placeholder="اسم المنتج" required>
+        
+                <input type="number" id="productPrice" placeholder="السعر" required>
+        
+                <input type="number" id="productDiscount" placeholder="الخصم %">
+        
+                <input type="number" id="productStock" placeholder="الكمية">
+        
+                <select id="productCategory" required>
+                
+                    <option value="">
+                        اختر القسم
+                    </option>
+                
+                </select>
+
+        
+                <textarea id="productDescription" placeholder="وصف المنتج">
+                </textarea>
+        
+                <label>
+                
+                    الصورة الرئيسية
+                
+                </label>
+                
+                <label for="productImage" class="custom-upload-btn">
+                
+                    <i class="fa-solid fa-camera"></i>
+                
+                    اختر الصورة الرئيسية
+                
+                </label>
+                
+                <span id="productFileName">
+                    لم يتم اختيار صورة
+                </span>
+                
+                <input type="file" id="productImage" hidden>
+        
+                <label>
+                
+                    صور المنتج الاخرى (اختياري)
+                
+                </label>
+                <input type="file" id="productImages" multiple accept="image/*">
+
+                <div id="removeMainImage" class="remove-main">
+                
+                    حذف الصورة الرئيسية
+                
+                </div>
+                <div id="imagesPreview" class="images-preview">
+                </div>
+                <button id="saveProductBtn">
+        
+                    حفظ المنتج
+        
+                </button>
+        
+            </div>
+        
+        </div>
+
+        <div id="bannerModal" class="banner-modal">
+            <div class="banner-modal-content">
+                <span id="closeBannerModal" class="close-modal">×</span>
+        
+                <h2>إدارة البانر</h2>
+        
+                <img id="bannerPreview" class="banner-preview" src="" alt="Banner Preview">
+        
+                <label for="bannerImage" class="custom-upload-btn">
+                    <i class="fa-solid fa-image"></i>
+                    اختر صورة البانر
+                </label>
+                
+                <span id="bannerFileName">
+                    لم يتم اختيار صورة
+                </span>
+                
+                <input type="file" id="bannerImage" hidden>
+        
+                <input type="text" id="bannerTitle" placeholder="عنوان البانر">
+        
+                <input type="text" id="bannerButtonText" placeholder="نص الزر">
+        
+                <select id="bannerLinkType">
+                    <option value="">بدون رابط</option>
+                    <option value="page">صفحة</option>
+                    <option value="category">قسم</option>
+                    <option value="product">منتج</option>
+                </select>
+        
+                <div id="bannerPageGroup" class="banner-link-group">
+                    <select id="bannerPageSelect">
+                        <option value="home-page">الرئيسية</option>
+                        <option value="products-page">المنتجات</option>
+                        <option value="about-page">من نحن</option>
+                        <option value="contact-page">تواصل معنا</option>
+                    </select>
+                </div>
+        
+                <div id="bannerCategoryGroup" class="banner-link-group">
+                    <select id="bannerCategorySelect"></select>
+                </div>
+        
+                <div id="bannerProductGroup" class="banner-link-group">
+                    <select id="bannerProductSelect"></select>
+                </div>
+        
+                <button id="saveBannerBtn">حفظ البانر</button>
+            </div>
+        </div>
+
+        <div id="categoryModal" class="banner-modal">
+            <div class="banner-modal-content">
+                <span id="closeCategoryModal" class="close-modal">×</span>
+                <h2>إدارة الأقسام</h2>
+        
+                <input type="text" id="categoryName" placeholder="اسم القسم">
+        
+                <button id="saveCategoryBtn">حفظ القسم</button>
+        
+                <div id="categoriesList"></div>
+            </div>
+        </div>
+
+        <div class="dashboard-stats">
+        
+            <div class="stat-card">
+                <i class="fa-solid fa-box"></i>
+                <h3 id="productsCount">0</h3>
+                <p>منتج</p>
+            </div>
+            
+            <div class="stat-card">
+                <i class="fa-solid fa-layer-group"></i>
+                <h3 id="categoriesCount">0</h3>
+                <p>قسم</p>
+            </div>
+            
+            <div class="stat-card">
+                <i class="fa-solid fa-warehouse"></i>
+                <h3 id="stockCount">0</h3>
+                <p>إجمالي المخزون</p>
+            </div>
+            
+            <div class="stat-card">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h3 id="lowStockCount">0</h3>
+                <p>مخزون منخفض</p>
+            </div>
+            
+            <div class="stat-card">
+                <i class="fa-solid fa-star"></i>
+                <h3 id="reviewsCount">0</h3>
+                <p>تقييم</p>
+            </div>
+        
+        </div>
+
+        <div class="admin-section">
+        
+            <h2>
+                آخر التقييمات
+            </h2>
+        
+            <div id="latestReviews">
+            </div>
+        
+        </div>
+
+        <div id="productsTable">
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="admin.js"></script>
+
+</body>
+
+</html>
