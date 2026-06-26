@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>حسابي</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+</head>
+
+<body>
+
+    <main class="account-page">
+    
+        <section class="profile-card">
+    
+            <div class="profile-avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+    
+            <div class="profile-info">
+    
+                <h2 id="accountName">...</h2>
+    
+                <p id="accountPhone"></p>
+    
+                <p id="memberSince"></p>
+    
+            </div>
+    
+        </section>
+
+
+        <div class="account-layout">
+        
+            <aside class="account-sidebar">
+                
+                <button class="account-tab active" data-tab="orders">
+                    <i class="fa-solid fa-box"></i>
+                    طلباتى
+                </button>
+        
+                <button class="account-tab" data-tab="wishlist">
+                    <i class="fa-solid fa-heart"></i>
+                    المفضلة
+                </button>
+        
+                <button class="account-tab" data-tab="coupons">
+                    <i class="fa-solid fa-ticket"></i>
+                    الكوبونات
+                </button>
+        
+                <button class="account-tab" data-tab="addresses">
+                    <i class="fa-solid fa-location-dot"></i>
+                    العناوين
+                </button>
+        
+                <button class="account-tab" data-tab="settings">
+                    <i class="fa-solid fa-gear"></i>
+                    الإعدادات
+                </button>
+        
+                <button class="logout-btn account-tab" id="logoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    تسجيل الخروج
+                </button>
+        
+            </aside>
+        
+            <div class="account-content">
+        
+                <section class="account-stats">
+        
+                    <div class="stat-box">
+                        <h3 id="ordersCount">0</h3>
+                        <span>الطلبات</span>
+                    </div>
+        
+                    <div class="stat-box">
+                        <h3 id="completedOrders">0</h3>
+                        <span>المكتملة</span>
+                    </div>
+        
+                    <div class="stat-box">
+                        <h3 id="pendingOrders">0</h3>
+                        <span>الجارية</span>
+                    </div>
+        
+                    <div class="stat-box">
+                        <h3 id="totalSpent">0 ج.م</h3>
+                        <span>إجمالى الإنفاق</span>
+                    </div>
+        
+                </section>
+        
+                <section class="orders-section account-panel active" id="ordersPanel">
+        
+                    <div class="orders-header">
+        
+                        <h2>طلباتى</h2>
+        
+                        <input id="ordersSearch" type="text" placeholder="ابحث برقم الطلب">
+        
+                    </div>
+        
+                    <div id="ordersContainer">
+        
+                    </div>
+        
+                </section>
+
+                <section class="account-panel" id="addressesPanel">
+                
+                    <div class="orders-header">
+                
+                        <h2>
+                
+                            العناوين
+                
+                        </h2>
+                
+                        <button id="addAddressBtn">
+                
+                            + إضافة عنوان
+                
+                        </button>
+                
+                    </div>
+                
+                    <div id="addressesContainer">
+                
+                    </div>
+                
+                </section>
+
+                <section class="account-panel" id="wishlistPanel">
+                
+                    <div class="orders-header">
+                        <h2>المفضلة</h2>
+                    </div>
+                
+                    <div id="wishlistContainer"></div>
+                
+                </section>
+
+                <section class="account-panel" id="couponsPanel">
+                
+                    <div class="orders-header">
+                        <h2>الكوبونات</h2>
+                    </div>
+                
+                    <div id="couponsContainer"></div>
+                
+                </section>
+
+                <section class="account-panel" id="settingsPanel">
+                
+                    <div class="orders-header">
+                        <h2>الإعدادات</h2>
+                    </div>
+                
+                    <div id="settingsContainer"></div>
+                
+                </section>
+        
+            </div>
+        
+        </div>
+    
+    </main>
+
+    <div id="orderModal" class="order-modal">
+    
+        <div class="order-modal-content">
+    
+            <span class="close-order-modal">
+    
+                &times;
+    
+            </span>
+    
+            <div id="orderDetails">
+    
+            </div>
+    
+        </div>
+    
+    </div>
+
+    <div id="addressModal" class="order-modal">
+    
+        <div class="order-modal-content address-modal-content">
+        
+            <span id="closeAddressModal" class="close-order-modal">&times;</span>
+        
+            <h2 id="addressModalTitle">
+                <i class="fa-solid fa-location-dot"></i>
+                إضافة عنوان
+            </h2>
+        
+            <p class="address-modal-subtitle">
+                احفظ عنوانك لتسهيل الطلب فى المرات القادمة
+            </p>
+        
+            <input type="hidden" id="addressId">
+        
+            <div class="address-form-grid">
+        
+                <div class="form-group">
+                    <label>اسم العنوان</label>
+                    <input id="addressTitle" type="text" placeholder="المنزل - العمل">
+                </div>
+        
+                <div class="form-group">
+                    <label>اسم المستلم</label>
+                    <input id="receiverName" type="text">
+                </div>
+        
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input id="receiverPhone" type="text">
+                </div>
+        
+                <div class="form-group">
+                    <label>المحافظة</label>
+                    <select id="addressCity"></select>
+                </div>
+        
+                <div class="form-group full-width">
+                    <label>العنوان بالكامل</label>
+                    <textarea id="addressText"></textarea>
+                </div>
+        
+                <div class="form-group full-width">
+                    <label>أقرب علامة مميزة</label>
+                    <input id="addressLandmark" type="text">
+                </div>
+        
+            </div>
+        
+            <label class="default-address">
+                <input id="defaultAddress" type="checkbox">
+                اجعل هذا العنوان افتراضياً
+            </label>
+        
+            <button id="saveAddressBtn">
+                حفظ العنوان
+            </button>
+        
+        </div>
+    
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="common.js"></script>
+
+    <script src="account.js"></script>
+
+</body>
+
+</html>

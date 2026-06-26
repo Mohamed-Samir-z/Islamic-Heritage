@@ -18,25 +18,13 @@
     <div class="admin-container">
 
         <div class="admin-header">
-
+        
             <h1>
+        
                 لوحة التحكم
+        
             </h1>
-
-            <button id="addProductBtn">
-                + إضافة منتج
-            </button>
-
-            <button id="bannerManagerBtn" class="icon-btn" type="button" title="إدارة البانر">
-                <i class="fa-solid fa-images"></i>
-            </button>
-            
-            <button id="addCategoryBtn">                           
-                +  الأقسام
-            </button>
-
-            <input type="text" id="adminSearch" class="admin-search" placeholder="ابحث عن منتج...">
-
+        
         </div>
         <div id="productModal" class="product-modal">
         
@@ -179,6 +167,168 @@
             </div>
         </div>
 
+        <div class="dashboard-sections">
+        
+            <div class="dashboard-card">
+        
+                <div class="dashboard-card-header">
+        
+                    <h2>
+        
+                        📦 المنتجات
+        
+                    </h2>
+        
+                    <i class="fa-solid fa-chevron-down"></i>
+        
+                </div>
+        
+                <div id="productsPanel" class="dashboard-panel">
+        
+                    <button id="addProductBtn">
+        
+                        + إضافة منتج
+        
+                    </button>
+        
+                    <input type="text" id="adminSearch" class="admin-search" placeholder="ابحث عن منتج...">
+        
+                    <div id="productsTable"></div>
+        
+                </div>
+        
+            </div>
+        
+            <div class="dashboard-card">
+        
+                <div class="dashboard-card-header">
+        
+                    <h2>
+        
+                        📂 الأقسام
+        
+                    </h2>
+        
+                    <i class="fa-solid fa-chevron-down"></i>
+        
+                </div>
+        
+                <div id="categoriesPanel" class="dashboard-panel">
+        
+                    <button id="addCategoryBtn">
+        
+                        + إضافة قسم
+        
+                    </button>
+        
+                </div>
+        
+            </div>
+        
+            <div class="dashboard-card">
+        
+                <div class="dashboard-card-header">
+        
+                    <h2>
+        
+                        🖼 البانر
+        
+                    </h2>
+        
+                    <i class="fa-solid fa-chevron-down"></i>
+        
+                </div>
+        
+                <div id="bannerPanel" class="dashboard-panel">
+        
+                    <button id="bannerManagerBtn" class="icon-btn">
+        
+                        إدارة البانر
+        
+                    </button>
+        
+                </div>
+        
+            </div>
+        
+            <div class="dashboard-card">
+        
+                <div class="dashboard-card-header">
+        
+                    <h2>
+        
+                        📦 الطلبات
+        
+                    </h2>
+        
+                    <i class="fa-solid fa-chevron-down"></i>
+        
+                </div>
+        
+                <div id="ordersPanel" class="dashboard-panel">
+                
+                    <div class="orders-toolbar">
+                
+                        <input id="ordersSearch" class="admin-search" placeholder="ابحث برقم الطلب أو اسم العميل">
+                
+                        <select id="ordersFilter">
+                
+                            <option value="all">
+                
+                                كل الطلبات
+                
+                            </option>
+                
+                            <option value="NEW">جديد</option>
+                            
+                            <option value="REVIEW">تمت المراجعة</option>
+                            
+                            <option value="PROCESSING">جارى التجهيز</option>
+                            
+                            <option value="PACKED">تم التغليف</option>
+                            
+                            <option value="SHIPPED">خرج للشحن</option>
+                            
+                            <option value="ONWAY">فى الطريق</option>
+                            
+                            <option value="DELIVERED">تم التسليم</option>
+                            
+                            <option value="CANCELLED">تم الإلغاء</option>
+                
+                        </select>
+                
+                    </div>
+                
+                    <div id="ordersCards">
+                
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+            <div class="dashboard-card">
+            
+                <div class="dashboard-card-header">
+            
+                    <h2>
+            
+                        📊 التقييمات
+            
+                    </h2>
+            
+                    <i class="fa-solid fa-chevron-down"></i>
+            
+                </div>
+
+            
+                <div id="latestReviews" class="dashboard-panel">
+                </div>
+            
+            </div>
+    
+        </div>
+
         <div class="dashboard-stats">
         
             <div class="stat-card">
@@ -213,23 +363,30 @@
         
         </div>
 
-        <div class="admin-section">
-        
-            <h2>
-                آخر التقييمات
-            </h2>
-        
-            <div id="latestReviews">
-            </div>
-        
-        </div>
-
-        <div id="productsTable">
-
         </div>
 
     </div>
 
+    <!-- Order Details Modal -->
+    
+    <div id="orderModal" class="order-modal">
+    
+        <div class="order-modal-content">
+    
+            <span id="closeOrderModal" class="close-modal">
+    
+                ×
+    
+            </span>
+    
+            <div id="orderDetailsContent">
+    
+            </div>
+    
+        </div>
+    
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="admin.js"></script>
 

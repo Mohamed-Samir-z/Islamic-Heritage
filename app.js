@@ -436,6 +436,7 @@ document.addEventListener("click", (e) => {
     id: product.id,
     name: product.name,
     price: getFinalPrice(product),
+    imageUrl: product.image,
   });
 });
 function addToCart(product) {
@@ -456,8 +457,19 @@ function addToCart(product) {
   const existingItem = cart.find((item) => item.id === product.id);
   if (existingItem) {
     existingItem.qty += 1;
+
+    // يحدث البيانات القديمة الموجودة فى السلة
+    existingItem.imageUrl = product.imageUrl;
+    existingItem.name = product.name;
+    existingItem.price = product.price;
   } else {
-    cart.push({ ...product, qty: 1 });
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.imageUrl,
+      qty: 1,
+    });
   }
 
   saveAndRefreshCart();
@@ -487,6 +499,7 @@ function addToCart(product) {
 function saveAndRefreshCart() {
   localStorage.setItem("mesk_cart", JSON.stringify(cart));
   updateCartUI();
+  showToast(product.name + " تمت اضافته للسلة");
 }
 
 function updateCartUI() {
@@ -513,56 +526,76 @@ function updateCartUI() {
     total += itemTotal;
 
     const itemHTML = `
-                    <div class="cart-item">
-                        <div class="cart-item-details">
-                            <div class="cart-item-title">
+      <div class="cart-item">
 
-                              ${item.name}
+          <img
+              src="${item.imageUrl}"
+              class="cart-item-image"
+              alt="${item.name}"
+          >
 
-                              ${
-                                item.outOfStock
-                                  ? `<div class="out-stock-label">
-                                نفد المخزون
-                              </div>`
-                                  : ""
-                              }
-                            </div>
-                            <div class="cart-item-price">${item.price} ج.م</div>
-                            <div class="cart-qty-controls">
+          <div class="cart-item-details">
 
-                                ${
-                                  item.outOfStock
-                                    ? `
-                                <span class="stock-ended">
-                                غير متوفر حالياً
-                                </span>
-                                `
-                                    : `
-                                <button
-                                class="cart-qty-btn"
-                                onclick="changeQty('${item.id}', -1)">
-                                -
-                                </button>
+              <div class="cart-item-title">
 
-                                <span
-                                style="font-size:14px;font-weight:bold;">
-                                ${item.qty}
-                                </span>
+                  ${item.name}
 
-                                <button
-                                class="cart-qty-btn"
-                                onclick="changeQty('${item.id}', 1)">
-                                +
-                                </button>
-                                `
-                                }
-                              </div>
-                        </div>
-                        <button class="remove-item-btn" onclick="removeFromCart('${item.id}')">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
+                  ${
+                    item.outOfStock
+                      ? `<div class="out-stock-label">
+                          نفد المخزون
+                        </div>`
+                      : ""
+                  }
+
+              </div>
+
+              <div class="cart-item-price">
+                  ${item.price} ج.م
+              </div>
+
+              <div class="cart-qty-controls">
+
+                  ${
+                    item.outOfStock
+                      ? `
+                      <span class="stock-ended">
+                          غير متوفر حالياً
+                      </span>
+                      `
+                      : `
+                      <button
+                          class="cart-qty-btn"
+                          onclick="changeQty('${item.id}',-1)">
+                          -
+                      </button>
+
+                      <span style="font-size:14px;font-weight:bold;">
+                          ${item.qty}
+                      </span>
+
+                      <button
+                          class="cart-qty-btn"
+                          onclick="changeQty('${item.id}',1)">
+                          +
+                      </button>
+                      `
+                  }
+
+              </div>
+
+          </div>
+
+          <button
+              class="remove-item-btn"
+              onclick="removeFromCart('${item.id}')">
+
+              <i class="fa-solid fa-trash-can"></i>
+
+          </button>
+
+      </div>
+      `;
     cartItemsList.insertAdjacentHTML("beforeend", itemHTML);
   });
 
@@ -605,8 +638,6 @@ window.removeFromCart = function (id) {
 };
 // إظهار التنبيهات الذكية
 
-const customerModal = document.getElementById("customerModal");
-
 document.getElementById("closeCustomerModal").addEventListener("click", () => {
   customerModal.classList.remove("active");
 });
@@ -624,7 +655,7 @@ checkoutBtn.addEventListener("click", () => {
   }
 
   cartSidebar.classList.remove("active");
-  customerModal.classList.add("active");
+  window.location.href = "checkout.html";
 });
 
 // 8. التعامل مع فورمة "تواصل معنا" وتوجيه الاستفسار للواتساب
@@ -770,6 +801,20 @@ logo.addEventListener("mouseup", () => {
 });
 
 logo.addEventListener("mouseleave", () => {
+  clearTimeout(pressTimer);
+});
+
+logo.addEventListener("touchstart", () => {
+  pressTimer = setTimeout(() => {
+    askAdminPassword();
+  }, 3000);
+});
+
+logo.addEventListener("touchend", () => {
+  clearTimeout(pressTimer);
+});
+
+logo.addEventListener("touchcancel", () => {
   clearTimeout(pressTimer);
 });
 
@@ -1073,4 +1118,18 @@ function showToast(message, type = "success") {
   setTimeout(() => {
     toast.remove();
   }, 3000);
+}
+
+const accountBtn = document.getElementById("accountBtn");
+
+if (accountBtn) {
+  accountBtn.onclick = () => {
+    const customer = localStorage.getItem("mesk_customer");
+
+    if (customer) {
+      window.location.href = "account.html";
+    } else {
+      window.location.href = "checkout.html";
+    }
+  };
 }

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسك للتراث الإسلامي - متجر إلكتروني متكامل</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&family=Cairo:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- الهيدر -->
+    <header>
+        <div class="header-container">
+            <div class="mobile-menu-btn" id="menuToggleBtn">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+
+            <ul class="nav-links">
+                <li><a data-target="home-page" class="nav-link-btn active">الرئيسية</a></li>
+                <li><a data-target="products-page" class="nav-link-btn">المنتجات</a></li>
+                <li><a data-target="about-page" class="nav-link-btn">من نحن</a></li>
+                <li><a data-target="contact-page" class="nav-link-btn">تواصل معنا</a></li>
+            </ul>
+
+            <div class="logo-area">
+                <div class="tasbih-container">
+                    <div id="tasbihRing"></div>
+
+                    <div class="inner-logo-static">
+                        <i class="fa-solid fa-book-open"></i>
+                        <span>مسك<br>التراث</span>
+                    </div>
+
+                    <div id="tasbihTassel" class="tasbih-tassel"></div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <i class="fa-solid fa-magnifying-glass" id="searchToggleBtn"></i>
+                <i class="fa-solid fa-user"></i>
+                <div class="cart-icon-container" id="cartToggleBtn">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-badge" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- شريط البحث المنبثق -->
+    <div class="search-bar-container" id="searchBarContainer">
+        <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="ابحث عن جلباب، سبحة، مسك...">
+        </div>
+    </div>
+    
+    <!-- المنيو الجانبي للموبايل -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="mobileSidebar">
+        <div class="sidebar-header">
+            <h3 style="color: var(--primary-color);">القائمة</h3>
+            <div class="sidebar-close" id="sidebarCloseBtn"><i class="fa-solid fa-xmark"></i></div>
+        </div>
+        <ul class="sidebar-links">
+            <li><a data-target="home-page" class="sidebar-link-btn active">الرئيسية</a></li>
+            <li><a data-target="products-page" class="sidebar-link-btn">المنتجات</a></li>
+            <li><a data-target="about-page" class="sidebar-link-btn">من نحن</a></li>
+            <li><a data-target="contact-page" class="sidebar-link-btn">تواصل معنا</a></li>
+        </ul>
+    </div>
+    
+    <!-- كارت السلة الجانبي -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="sidebar-header">
+            <h3 style="color: var(--primary-color);"><i class="fa-solid fa-bag-shopping" style="margin-left:8px;"></i>سلة
+                التسوق</h3>
+            <div class="sidebar-close" id="cartCloseBtn"><i class="fa-solid fa-xmark"></i></div>
+        </div>
+        <div class="cart-items-container" id="cartItemsList">
+            <p class="empty-cart-msg">السلة فارغة حالياً</p>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>الإجمالي:</span>
+                <span id="cartTotalAmount">0 ج.م</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">إتمام الطلب (واتساب)</button>
+        </div>
+    </div>
+    
+    <!-- التنبيه الذكي عند إضافة منتج -->
+    <div class="toast-notification" id="toastNotice">
+        <i class="fa-solid fa-circle-check" style="font-size: 20px; color: var(--accent-color);"></i>
+        <span id="toastMessage">تم إضافة المنتج للسلة بنجاح!</span>
+    </div>
+
+    <main class="checkout-page">
+    
+        <div class="checkout-container">
+    
+            <!-- بيانات العميل -->
+            <section class="checkout-form">
+    
+                <h2>
+                    <i class="fa-solid fa-user"></i>
+                    استكمال البيانات
+                </h2>
+
+                <div id="savedAddressesBox" class="saved-addresses-box">
+                
+                    <label>
+                
+                        <i class="fa-solid fa-location-dot"></i>
+                
+                        اختر عنوان محفوظ
+                
+                    </label>
+                
+                    <select id="savedAddresses">
+                
+                        <option value="">
+                
+                            اختر عنوان...
+                
+                        </option>
+                
+                    </select>
+                
+                    <button type="button" id="newAddressBtn">
+                
+                        <i class="fa-solid fa-plus"></i>
+                
+                        إضافة عنوان جديد
+                
+                    </button>
+                
+                </div>
+    
+                <div class="form-group">
+                    <label>الاسم بالكامل</label>
+                    <input type="text" id="customerName" placeholder="اكتب اسمك">
+                </div>
+    
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input type="tel" id="customerPhone" placeholder="01xxxxxxxxx">
+                </div>
+    
+                <div class="form-group">
+                    <label>المحافظة</label>
+    
+                    <select id="customerCity">
+    
+                        <option value="">اختر المحافظة</option>
+    
+                    </select>
+    
+                </div>
+    
+                <div class="form-group">
+                    <label>العنوان</label>
+    
+                    <textarea id="customerAddress" rows="3" placeholder="العنوان بالتفصيل"></textarea>
+    
+                </div>
+    
+                <div class="form-group">
+                    <label>علامة مميزة (اختيارى)</label>
+    
+                    <input id="customerLandmark" type="text">
+    
+                </div>
+    
+                <div class="form-group">
+                    <label>ملاحظات</label>
+    
+                    <textarea id="customerNotes" rows="3"></textarea>
+    
+                </div>
+    
+                <h2>
+    
+                    <i class="fa-solid fa-truck"></i>
+    
+                    الشحن
+    
+                </h2>
+    
+                <div class="radio-group">
+    
+                    <label>
+    
+                        <input type="radio" name="shipping" value="delivery" checked>
+    
+                        شحن
+    
+                    </label>
+    
+                    <label>
+    
+                        <input type="radio" name="shipping" value="pickup">
+    
+                        استلام من الفرع
+    
+                    </label>
+    
+                </div>
+    
+                <h2>
+    
+                    <i class="fa-solid fa-money-bill-wave"></i>
+    
+                    الدفع
+    
+                </h2>
+    
+                <div class="radio-group">
+    
+                    <label>
+    
+                        <input type="radio" name="payment" value="cash" checked>
+    
+                        عند الاستلام
+    
+                    </label>
+    
+                    <label>
+    
+                        <input type="radio" name="payment" value="vodafone">
+    
+                        فودافون كاش
+    
+                    </label>
+    
+                    <label>
+    
+                        <input type="radio" name="payment" value="instapay">
+    
+                        إنستا باى
+    
+                    </label>
+    
+                </div>
+    
+            </section>
+    
+            <!-- ملخص الطلب -->
+    
+            <aside class="checkout-summary">
+    
+                <h2>
+    
+                    <i class="fa-solid fa-receipt"></i>
+    
+                    ملخص الطلب
+    
+                </h2>
+
+                <div id="checkoutItems">
+                </div>
+                <div class="coupon-box">
+                    <input id="couponCode" placeholder="كود الخصم">
+                    <button id="applyCouponBtn">
+                        تطبيق
+                    </button>
+                </div>
+                <div class="summary-row">
+                    <span>الإجمالى</span>
+                    <span id="subtotalPrice">
+                        0 ج.م
+                    </span>
+                </div>
+                <div class="summary-row">
+                    <span>الخصم</span>
+                    <span id="discountPrice">
+                        0 ج.م
+                    </span>
+                </div>
+                <div class="summary-row">
+                    <span>الشحن</span>
+                    <span id="shippingPrice">
+                        0 ج.م
+                    </span>
+                </div>
+                <div class="summary-row total">
+                    <span>الإجمالى النهائى</span>
+                    <span id="totalPrice">
+                        0 ج.م
+                    </span>
+                </div>
+                <button id="confirmOrderBtn" class="checkout-btn">
+                    تأكيد الطلب
+                </button>
+            </aside>
+        </div>
+    </main>
+
+    <div id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="common.js"></script>
+    <script src="layout.js"></script>
+    <script src="checkout.js"></script>
+    
+</body>
+    
+</html>

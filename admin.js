@@ -4,6 +4,10 @@ const WEB_APP_URL =
 // مفتاح الـ API الخاص بك الذي أرسلته من موقع ImgBB
 const IMGBB_API_KEY = "725d3e4c50df666dca90e19e483a2a8d";
 
+/* ===========================================================
+    GLOBAL VARIABLES
+=========================================================== */
+
 let products = [];
 const meskAlert = Swal.mixin({
   target: document.body,
@@ -27,6 +31,10 @@ let bannerEditId = null;
 let bannerImageUrl = "";
 let bannerNewImageFile = null;
 
+/* ===========================================================
+    DOM ELEMENTS
+=========================================================== */
+
 const bannerManagerBtn = document.getElementById("bannerManagerBtn");
 const bannerModal = document.getElementById("bannerModal");
 const closeBannerModal = document.getElementById("closeBannerModal");
@@ -43,7 +51,6 @@ const bannerCategorySelect = document.getElementById("bannerCategorySelect");
 const bannerProductSelect = document.getElementById("bannerProductSelect");
 const saveBannerBtn = document.getElementById("saveBannerBtn");
 
-
 const addCategoryBtn = document.getElementById("addCategoryBtn");
 const categoryModal = document.getElementById("categoryModal");
 const closeCategoryModal = document.getElementById("closeCategoryModal");
@@ -54,6 +61,24 @@ const categoriesList = document.getElementById("categoriesList");
 let categories = [];
 let categoryEditId = null;
 let categoryEditOldName = "";
+
+/* ===========================================================
+    ORDERS
+=========================================================== */
+
+let orders = [];
+
+const ordersCards = document.getElementById("ordersCards");
+const ordersSearch = document.getElementById("ordersSearch");
+const ordersFilter = document.getElementById("ordersFilter");
+
+const orderModal = document.getElementById("orderModal");
+const closeOrderModal = document.getElementById("closeOrderModal");
+const orderDetailsContent = document.getElementById("orderDetailsContent");
+
+/* ===========================================================
+    BANNER
+=========================================================== */
 function toggleBannerLinkFields() {
   const type = bannerLinkType.value;
 
@@ -119,6 +144,10 @@ async function loadCurrentBanner() {
     console.error("Load Banner Error:", error);
   }
 }
+
+/* ===========================================================
+    CATEGORIES
+=========================================================== */
 
 async function loadCategories() {
   const response = await fetch(`${WEB_APP_URL}?action=getCategories`);
@@ -258,7 +287,6 @@ categoriesList.addEventListener("click", async (e) => {
   }
 });
 
-
 bannerManagerBtn.addEventListener("click", async () => {
   await fillBannerOptions();
   await loadCurrentBanner();
@@ -357,13 +385,8 @@ saveBannerBtn.addEventListener("click", async () => {
   Swal.close();
   bannerModal.classList.remove("active");
   meskAlert.fire({ icon: "success", title: "تم الحفظ بنجاح" });
-
 });
 
-renderProductsTable();
-updateDashboard();
-loadDashboardStats();
-loadLatestReviews();
 
 // دالة لجلب البيانات من جوجل شيت
 async function fetchProducts() {
@@ -377,6 +400,10 @@ async function fetchProducts() {
   }
 }
 
+/* ===========================================================
+    PRODUCTS
+=========================================================== */
+
 // دالة عرض المنتجات
 async function renderProductsTable() {
   products = await fetchProducts();
@@ -387,18 +414,18 @@ async function renderProductsTable() {
     let stockWarning = "";
 
     if (Number(product.stock) <= 0) {
-        stockWarning = `
+      stockWarning = `
       <div class="out-stock-warning">
         ❌ نفد المخزون
       </div>
     `;
-      } else if (Number(product.stock) <= 5) {
-        stockWarning = `
+    } else if (Number(product.stock) <= 5) {
+      stockWarning = `
       <div class="low-stock-warning">
         ⚠ متبقي ${product.stock} فقط
       </div>
     `;
-      }
+    }
     table.innerHTML += `
         <div class="admin-product-card">
         <img src="${product.imageUrl}" class="admin-product-image">
@@ -689,7 +716,6 @@ document.getElementById("productImage").addEventListener("change", (e) => {
   reader.readAsDataURL(file);
 });
 
-
 function fileToBase64(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -783,6 +809,590 @@ document.getElementById("productsTable").addEventListener("click", (e) => {
   }
 });
 
+/* ===========================================================
+    ORDERS
+=========================================================== */
+
+async function loadOrders() {
+
+    try {
+
+        const response = await fetch(`${WEB_APP_URL}?action=getOrders`);
+
+        orders = await response.json();
+
+        renderOrders();
+
+    } catch (err) {
+
+        console.error("Orders Error :", err);
+
+    }
+
+}
+
+ordersSearch.addEventListener("input", filterOrders);
+
+ordersFilter.addEventListener("change", filterOrders);
+
+function filterOrders() {
+  const search = ordersSearch.value.trim().toLowerCase();
+
+  const status = ordersFilter.value;
+
+  let filtered = orders.filter((order) => {
+    const matchSearch =
+      order.id.toLowerCase().includes(search) ||
+      order.customerName.toLowerCase().includes(search) ||
+      String(order.phone).includes(search);
+
+    const matchStatus = status === "all" || order.status === status;
+
+    return matchSearch && matchStatus;
+  });
+
+  renderOrders(filtered);
+  document.querySelectorAll(".order-status-select").forEach((select) => {
+    updateStatusColor(select);
+  });
+}
+
+
+function updateStatusColor(select) {
+  select.className = "order-status-select";
+
+  select.classList.add(select.value.toLowerCase());
+}
+
+ordersCards.addEventListener("change", (e) => {
+  if (e.target.classList.contains("order-status-select")) {
+    updateStatusColor(e.target);
+  }
+});
+
+
+function renderOrders(list = orders) {
+  if (!list.length) {
+    ordersCards.innerHTML = `
+        <div class="empty-orders">
+
+            لا توجد طلبات حتى الآن
+
+        </div>
+        `;
+
+    return;
+  }
+
+  ordersCards.innerHTML = "";
+
+  list.forEach((order) => {
+    ordersCards.innerHTML += `
+
+        <div class="order-card" data-id="${order.id}">
+
+            <div class="order-header">
+
+                <div>
+
+                    <strong>${order.id}</strong>
+
+                    <select
+                      class="order-status-select"
+                      data-id="${order.id}">
+
+                        <option value="NEW">جديد</option>
+
+                        <option value="REVIEW">تمت المراجعة</option>
+
+                        <option value="PROCESSING">جارى التجهيز</option>
+
+                        <option value="PACKED">تم التغليف</option>
+
+                        <option value="SHIPPED">خرج للشحن</option>
+
+                        <option value="ONWAY">فى الطريق</option>
+
+                        <option value="DELIVERED">تم التسليم</option>
+
+                        <option value="CANCELLED">تم الإلغاء</option>
+
+                    </select>
+
+                </div>
+
+                <div>
+
+                    ${formatAdminDate(order.createdAt)}
+
+                </div>
+
+            </div>
+
+            <div class="order-body">
+
+                <img src="${order.items[0].imageUrl}" alt="${order.items[0].name}" />
+
+                <h3>${order.customerName}</h3>
+
+                <span class="payment-badge">
+
+                  ${order.paymentStatus}
+
+                </span>
+                <p>
+
+                    📱 ${order.phone}
+
+                </p>
+
+                <p>
+
+                    📍 ${order.city}
+
+                </p>
+
+                <p>
+
+                    💰 ${order.total} ج.م
+
+                </p>
+
+                <p>
+
+                  💳
+
+                  ${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع"}
+
+                </p>
+
+                <p>
+
+                  🚚
+
+                  ${order.shippingType == "pickup" ? "استلام من المتجر" : "شحن"}
+
+                </p>
+
+                <p>
+
+                    🛒 ${order.items.length} منتج
+
+                    -
+
+                  ${order.items.reduce(
+                    (s, i) => s + i.qty,
+
+                    0,
+                  )}
+
+                  قطعة
+
+                </p>
+
+            </div>
+
+            <div class="order-actions">
+
+                <button class="view-order-btn"
+
+                    data-id="${order.id}">
+
+                    <i class="fa-solid fa-eye"></i>
+
+                </button>
+
+                <button class="whatsapp-order-btn"
+
+                    data-phone="${order.phone}">
+
+                    <i class="fab fa-whatsapp"></i>
+
+                </button>
+
+                <button
+
+                  class="copy-order-btn"
+
+                  data-id="${order.id}">
+
+                  <i class="fa-solid fa-copy"></i>
+
+                </button>
+
+                <button class="delete-order-btn"
+
+                    data-id="${order.id}">
+
+                    <i class="fa-solid fa-trash"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        `;
+  });
+}
+
+
+function openWhatsapp(phone) {
+  window.open(
+    `https://wa.me/+2${phone}`,
+
+    "_blank",
+  );
+}
+
+function formatAdminDate(date) {
+  return new Date(date).toLocaleString("ar-EG", {
+    year: "numeric",
+
+    month: "long",
+
+    day: "numeric",
+
+    hour: "2-digit",
+
+    minute: "2-digit",
+  });
+}
+async function deleteOrder(id) {
+  const result = await meskAlert.fire({
+    icon: "warning",
+
+    title: "حذف الطلب",
+
+    text: "هل تريد حذف هذا الطلب؟",
+
+    showCancelButton: true,
+
+    confirmButtonText: "حذف",
+
+    cancelButtonText: "إلغاء",
+  });
+
+  if (!result.isConfirmed) return;
+
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "deleteOrder",
+
+      id: id,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (data.success) {
+    meskAlert.fire({
+      icon: "success",
+
+      title: "تم حذف الطلب",
+    });
+
+    loadOrders();
+  } else {
+    meskAlert.fire({
+      icon: "error",
+
+      title: "فشل حذف الطلب",
+    });
+  }
+}
+
+async function openOrderDetails(orderId) {
+  const order = orders.find((o) => String(o.id) === String(orderId));
+
+  if (!order) return;
+
+  const logsResponse = await fetch(
+    `${WEB_APP_URL}?action=getOrderLogs&orderId=${orderId}`,
+  );
+
+  const logs = await logsResponse.json();
+
+  let itemsHTML = "";
+
+  order.items.forEach((item) => {
+    itemsHTML += `
+
+      <div class="order-product">
+
+      <img src="${item.imageUrl}" class="order-product-image">
+
+      <div class="order-product-info">
+
+      <h3>${item.name}</h3>
+
+      <p>
+
+      ${item.qty} × ${item.price} ج.م
+
+      </p>
+
+      <p>
+
+      الإجمالى :
+
+      ${item.qty * item.price} ج.م
+
+      </p>
+
+      </div>
+
+      </div>
+
+      `;
+        });
+
+        let logsHTML = "";
+
+        logs.reverse().forEach((log) => {
+          logsHTML += `
+
+      <div class="timeline-item">
+
+      <div class="timeline-circle"></div>
+
+      <div class="timeline-content">
+
+      <strong>
+
+      ${log.newStatus}
+
+      </strong>
+
+      <p>
+
+      ${log.message || ""}
+
+      </p>
+
+      <small>
+
+      ${formatAdminDate(log.createdAt)}
+
+      </small>
+
+      </div>
+
+      </div>
+
+      `;
+        });
+
+        orderDetailsContent.innerHTML = `
+
+      <div class="order-details-wrapper">
+
+      <div class="order-top">
+
+      <h2>
+
+      ${order.id}
+
+      </h2>
+
+      <span class="payment-badge">
+
+      ${order.paymentStatus}
+
+      </span>
+
+      </div>
+
+      <div class="order-section">
+
+      <h3>
+
+      بيانات العميل
+
+      </h3>
+
+      <p><b>الاسم :</b> ${order.customerName}</p>
+
+      <p><b>الهاتف :</b> ${order.phone}</p>
+
+      <p><b>المحافظة :</b> ${order.city}</p>
+
+      <p><b>العنوان :</b> ${order.address}</p>
+
+      </div>
+
+      <div class="order-section">
+
+      <h3>
+
+      المنتجات
+
+      </h3>
+
+      ${itemsHTML}
+
+      </div>
+
+      <div class="order-section">
+
+      <h3>
+
+      ملخص الطلب
+
+      </h3>
+
+      <p>الإجمالى : ${order.total} ج.م</p>
+
+      <p>الشحن : ${order.shipping} ج.م</p>
+
+      <p>الخصم : ${order.discount} ج.م</p>
+
+      <p>
+
+      طريقة الدفع :
+
+      ${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع إلكترونياً"}
+
+      </p>
+
+      <p>
+
+      حالة الطلب :
+
+      ${order.status}
+
+      </p>
+
+      </div>
+
+      <div class="order-section">
+
+      <h3>
+
+      سجل الطلب
+
+      </h3>
+
+      <div class="timeline">
+
+      ${logsHTML}
+
+      </div>
+
+      </div>
+
+      </div>
+
+    `;
+
+  orderModal.classList.add("active");
+}
+
+
+
+ordersCards.addEventListener("click", (e) => {
+  const view = e.target.closest(".view-order-btn");
+
+  if (view) {
+    openOrderDetails(view.dataset.id);
+
+    return;
+  }
+
+  const whatsapp = e.target.closest(".whatsapp-order-btn");
+
+  if (whatsapp) {
+    openWhatsapp(whatsapp.dataset.phone);
+
+    return;
+  }
+
+  const copy = e.target.closest(".copy-order-btn");
+
+  if (copy) {
+    navigator.clipboard.writeText(copy.dataset.id);
+
+    meskAlert.fire({
+      icon: "success",
+
+      title: "تم النسخ",
+
+      timer: 1000,
+
+      showConfirmButton: false,
+    });
+
+    return;
+  }
+
+  const del = e.target.closest(".delete-order-btn");
+
+  if (del) {
+    deleteOrder(del.dataset.id);
+  }
+});
+
+ordersCards.addEventListener("change", async (e) => {
+  if (!e.target.classList.contains("order-status-select")) return;
+
+  const orderId = e.target.dataset.id;
+
+  const status = e.target.value;
+
+  await updateOrderStatus(orderId, status);
+});
+
+closeOrderModal.onclick = () => {
+  orderModal.classList.remove("active");
+};
+
+orderModal.onclick = (e) => {
+  if (e.target === orderModal) {
+    orderModal.classList.remove("active");
+  }
+};
+
+async function updateOrderStatus(id, status) {
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "updateOrderStatus",
+
+      id,
+
+      status,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    meskAlert.fire({
+      icon: "success",
+
+      title: "تم تحديث الحالة",
+    });
+
+    loadOrders();
+  }
+}
+
+
+/* ===========================================================
+    DASHBOARD
+=========================================================== */
+
 async function loadDashboardStats() {
   try {
     const response = await fetch(`${WEB_APP_URL}?action=getStats`);
@@ -853,3 +1463,56 @@ async function loadLatestReviews() {
     console.error(err);
   }
 }
+
+/* ===========================================================
+    ACCORDION
+=========================================================== */
+
+function initDashboardAccordion() {
+  document.querySelectorAll(".dashboard-card").forEach((card) => {
+    const header = card.querySelector(".dashboard-card-header");
+
+    const panel = card.querySelector(".dashboard-panel");
+
+    const icon = header.querySelector("i");
+
+    panel.style.maxHeight = "0px";
+
+    header.onclick = () => {
+      const opened = panel.classList.contains("open");
+
+      document.querySelectorAll(".dashboard-panel").forEach((p) => {
+        p.classList.remove("open");
+
+        p.style.maxHeight = "0px";
+      });
+
+      document.querySelectorAll(".dashboard-card-header i").forEach((i) => {
+        i.style.transform = "rotate(0deg)";
+      });
+
+      if (!opened) {
+        panel.classList.add("open");
+
+        panel.style.maxHeight = panel.scrollHeight + "px";
+
+        icon.style.transform = "rotate(180deg)";
+      }
+    };
+  });
+}
+
+/* ===========================================================
+    INIT
+=========================================================== */
+
+async function initAdmin() {
+    await refreshCategoriesUI();
+    await renderProductsTable();
+    await loadDashboardStats();
+    await loadLatestReviews();
+    await loadOrders();
+    initDashboardAccordion();
+}
+
+document.addEventListener("DOMContentLoaded", initAdmin);
