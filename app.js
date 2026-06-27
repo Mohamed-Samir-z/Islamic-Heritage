@@ -1,3 +1,5 @@
+// ملف الكود الرئيسي app.js
+
 const WEB_APP_URL =
   "https://script.google.com/macros/s/AKfycbyLu7JJfHoSyWbIjO0vwybOyWO1SFU_LTqB-k9T3pY99u3xVZLRGVq-1C8TPB-m7XCPzg/exec";
 
@@ -1127,9 +1129,260 @@ if (accountBtn) {
     const customer = localStorage.getItem("mesk_customer");
 
     if (customer) {
-      window.location.href = "account.html";
-    } else {
-      window.location.href = "checkout.html";
+      location.href = "account.html";
+
+      return;
     }
+
+    loginModal.classList.add("show");
   };
 }
+
+document.querySelector(".close-login").onclick = () => {
+  loginModal.classList.remove("show");
+};
+
+const loginModal = document.getElementById("loginModal");
+loginModal.onclick = (e) => {
+  if (e.target === loginModal) {
+    loginModal.classList.remove("show");
+  }
+};
+
+async function loginCustomer() {
+  const phone = document.getElementById("loginPhone").value.trim();
+
+  const password = document.getElementById("loginPassword").value;
+
+  if (!phone || !password) {
+    Swal.fire({
+      icon: "warning",
+      title: "أكمل البيانات",
+    });
+
+    return;
+  }
+
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "loginCustomer",
+
+      phone,
+
+      password,
+    }),
+  });
+
+  const result = await response.json();
+
+  console.log(result);
+
+  // أول دخول (لا توجد كلمة مرور)
+  if (result.needPassword) {
+    loginModal.classList.remove("show");
+
+    document.getElementById("createPasswordModal").classList.add("show");
+
+    // نخزن رقم الهاتف عشان نستخدمه فى إنشاء كلمة المرور
+    localStorage.setItem("tempPhone", phone);
+
+    return;
+  }
+
+  if (!result.success) {
+    Swal.fire({
+      icon: "error",
+
+      title: result.message,
+    });
+
+    return;
+  }
+
+  localStorage.setItem(
+    "mesk_customer",
+
+    JSON.stringify(result.customer),
+  );
+
+  loginModal.classList.remove("show");
+
+  Swal.fire({
+    icon: "success",
+
+    title: "تم تسجيل الدخول",
+  });
+}
+document.getElementById("loginBtn").onclick = loginCustomer;
+
+const registerModal = document.getElementById("registerModal");
+document.getElementById("goRegisterBtn").onclick = () => {
+  loginModal.classList.remove("show");
+
+  registerModal.classList.add("show");
+};
+
+document.querySelector(".close-register").onclick = () => {
+  registerModal.classList.remove("show");
+};
+
+
+
+registerModal.onclick = (e) => {
+  if (e.target === registerModal) {
+    registerModal.classList.remove("show");
+  }
+};
+
+async function registerCustomer() {
+  const name = registerName.value.trim();
+
+  const phone = registerPhone.value.trim();
+
+  const password = registerPassword.value;
+
+  const confirm = registerConfirmPassword.value;
+
+  if (!name || !phone || !password) {
+    Swal.fire({
+      icon: "warning",
+
+      title: "أكمل البيانات",
+    });
+
+    return;
+  }
+
+  if (password !== confirm) {
+    Swal.fire({
+      icon: "error",
+
+      title: "كلمتا المرور غير متطابقتين",
+    });
+
+    return;
+  }
+
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "registerCustomer",
+
+      name,
+
+      phone,
+
+      password,
+    }),
+  });
+
+  const result = await response.json();
+  console.log(result);
+  alert(JSON.stringify(result));
+
+  if (result.needPassword) {
+    alert("فتح المودال");
+
+    document.getElementById("createPasswordModal").classList.add("show");
+
+    return;
+  }
+
+  if (!result.success) {
+    Swal.fire({
+      icon: "error",
+
+      title: result.message,
+    });
+
+    return;
+  }
+
+  
+
+  localStorage.setItem(
+    "mesk_customer",
+
+    JSON.stringify(result.customer),
+  );
+
+  Swal.fire({
+    icon: "success",
+
+    title: "تم إنشاء الحساب",
+  }).then(() => {
+    location.href = "account.html";
+  });
+}
+
+const registerName = document.getElementById("registerName");
+const registerPhone = document.getElementById("registerPhone");
+const registerPassword = document.getElementById("registerPassword");
+const registerConfirmPassword = document.getElementById(
+  "registerConfirmPassword",
+);
+const registerBtn = document.getElementById("registerBtn");
+registerBtn.onclick = registerCustomer;
+const savePasswordBtn = document.getElementById("savePasswordBtn");
+
+
+savePasswordBtn.onclick = async () => {
+  if (newPassword.value != confirmPassword.value) {
+    Swal.fire({
+      icon: "error",
+
+      text: "كلمتا المرور غير متطابقتين",
+    });
+
+    return;
+  }
+
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "createPassword",
+
+      phone: localStorage.getItem("tempPhone"),
+
+      password: newPassword.value,
+    }),
+  });
+
+  if (newPassword.value.length < 6) {
+    Swal.fire({
+      icon: "warning",
+      text: "كلمة المرور يجب ألا تقل عن 6 أحرف",
+    });
+
+    return;
+  }
+
+  const result = await response.json();
+
+  if (result.success) {
+    localStorage.setItem(
+      "mesk_customer",
+
+      JSON.stringify(result.customer),
+    );
+
+    localStorage.removeItem("tempPhone");
+    location.href = "account.html";
+  }
+};

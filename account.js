@@ -8,7 +8,11 @@ if (!customer) {
 document.getElementById("accountName").textContent = customer.name;
 
 document.getElementById("accountPhone").textContent = customer.phone;
+document.getElementById("editCustomerName").value = customer.name || "";
 
+document.getElementById("editCustomerPhone").value = customer.phone || "";
+
+document.getElementById("editCustomerEmail").value = customer.email || "";
 
 if (customer.createdAt) {
   document.getElementById("memberSince").textContent =
@@ -16,38 +20,36 @@ if (customer.createdAt) {
 }
 
 async function loadOrders() {
-    const response = await fetch(
-        `${WEB_APP_URL}?action=getCustomerOrders&customerId=${customer.id}`,
-    );
+  const response = await fetch(
+    `${WEB_APP_URL}?action=getCustomerOrders&customerId=${customer.id}`,
+  );
 
-    const orders = await response.json();
+  const orders = await response.json();
 
-    window.customerOrders = orders;
+  window.customerOrders = orders;
 
-    renderOrders(orders);
+  renderOrders(orders);
 
-    updateStats(orders);
+  updateStats(orders);
 }
 
 document.querySelector(".close-order-modal").onclick = () => {
-    document.getElementById("orderModal").classList.remove("show");
+  document.getElementById("orderModal").classList.remove("show");
 };
 
 document.getElementById("orderModal").onclick = (e) => {
-    if (e.target.id === "orderModal") {
-        document.getElementById("orderModal").classList.remove("show");
-    }
+  if (e.target.id === "orderModal") {
+    document.getElementById("orderModal").classList.remove("show");
+  }
 };
 
 function renderOrders(orders) {
+  const container = document.getElementById("ordersContainer");
 
-    const container = document.getElementById("ordersContainer");
+  container.innerHTML = "";
 
-    container.innerHTML = "";
-
-    if (!orders.length) {
-
-        container.innerHTML = `
+  if (!orders.length) {
+    container.innerHTML = `
         <div class="empty-orders">
 
             <i class="fa-solid fa-box-open"></i>
@@ -59,20 +61,17 @@ function renderOrders(orders) {
         </div>
         `;
 
-        return;
-    }
+    return;
+  }
 
-    orders.forEach(order => {
+  orders.forEach((order) => {
+    const firstImage = order.items?.[0]?.imageUrl || "";
 
-        const firstImage =
-            order.items?.[0]?.imageUrl || "";
+    const itemsCount = order.items?.length || 0;
 
-        const itemsCount =
-            order.items?.length || 0;
+    const status = getStatus(order.status);
 
-        const status = getStatus(order.status);
-
-        container.innerHTML += `
+    container.innerHTML += `
 
         <div class="order-card"
 
@@ -151,84 +150,72 @@ function renderOrders(orders) {
         </div>
 
         `;
-
-    });
-
+  });
 }
 
 function loadCities(selected = "") {
+  const cities = [
+    "القاهرة",
+    "الجيزة",
+    "الإسكندرية",
+    "القليوبية",
+    "الشرقية",
+    "الغربية",
+    "المنوفية",
+    "البحيرة",
+    "كفر الشيخ",
+    "الدقهلية",
+    "دمياط",
+    "بورسعيد",
+    "الإسماعيلية",
+    "السويس",
+    "شمال سيناء",
+    "جنوب سيناء",
+    "الفيوم",
+    "بنى سويف",
+    "المنيا",
+    "أسيوط",
+    "سوهاج",
+    "قنا",
+    "الأقصر",
+    "أسوان",
+    "البحر الأحمر",
+    "مطروح",
+    "الوادى الجديد",
+  ];
 
-    const cities = [
+  addressCity.innerHTML = `<option value="">اختر المحافظة</option>`;
 
-        "القاهرة",
-        "الجيزة",
-        "الإسكندرية",
-        "القليوبية",
-        "الشرقية",
-        "الغربية",
-        "المنوفية",
-        "البحيرة",
-        "كفر الشيخ",
-        "الدقهلية",
-        "دمياط",
-        "بورسعيد",
-        "الإسماعيلية",
-        "السويس",
-        "شمال سيناء",
-        "جنوب سيناء",
-        "الفيوم",
-        "بنى سويف",
-        "المنيا",
-        "أسيوط",
-        "سوهاج",
-        "قنا",
-        "الأقصر",
-        "أسوان",
-        "البحر الأحمر",
-        "مطروح",
-        "الوادى الجديد"
-
-    ];
-
-    addressCity.innerHTML =
-        `<option value="">اختر المحافظة</option>`;
-
-    cities.forEach(city=>{
-
-        addressCity.innerHTML += `
+  cities.forEach((city) => {
+    addressCity.innerHTML += `
 
         <option
             value="${city}"
-            ${city===selected?"selected":""}>
+            ${city === selected ? "selected" : ""}>
 
             ${city}
 
         </option>
 
         `;
-
-    });
-
+  });
 }
 
 function formatDate(date) {
-    return new Date(date).toLocaleDateString("ar-EG", {
-        year: "numeric",
+  return new Date(date).toLocaleDateString("ar-EG", {
+    year: "numeric",
 
-        month: "long",
+    month: "long",
 
-        day: "numeric",
-    });
+    day: "numeric",
+  });
 }
 
-function renderAddresses(){
+function renderAddresses() {
+  const container = document.getElementById("addressesContainer");
 
-    const container =
-        document.getElementById("addressesContainer");
-
-    if(!addresses.length){
-
-        container.innerHTML=`
+  if (!addresses.length) {
+    container.innerHTML = `
 
         <div class="empty-orders">
 
@@ -244,15 +231,13 @@ function renderAddresses(){
 
         `;
 
-        return;
+    return;
+  }
 
-    }
+  container.innerHTML = "";
 
-    container.innerHTML="";
-
-    addresses.forEach(address=>{
-
-        container.innerHTML += `
+  addresses.forEach((address) => {
+    container.innerHTML += `
 
             <div class="address-card">
 
@@ -275,7 +260,7 @@ function renderAddresses(){
             </div>
 
             ${
-            address.isDefault
+              address.isDefault
                 ? `<span class="default-badge">
 
             افتراضى
@@ -345,7 +330,7 @@ function renderAddresses(){
             </button>
 
             ${
-            !address.isDefault
+              !address.isDefault
                 ? `
 
             <button
@@ -367,191 +352,158 @@ function renderAddresses(){
             </div>
 
         `;
-
-    });
-
+  });
 }
 
 async function deleteAddress(id) {
-    const result = await Swal.fire({
-        icon: "warning",
+  const result = await Swal.fire({
+    icon: "warning",
 
-        title: "حذف العنوان؟",
+    title: "حذف العنوان؟",
 
-        text: "لن تستطيع استرجاعه",
+    text: "لن تستطيع استرجاعه",
 
-        showCancelButton: true,
+    showCancelButton: true,
 
-        confirmButtonText: "حذف",
-    });
+    confirmButtonText: "حذف",
+  });
 
-    if (!result.isConfirmed) return;
+  if (!result.isConfirmed) return;
 
-    await fetch(WEB_APP_URL, {
-        method: "POST",
+  await fetch(WEB_APP_URL, {
+    method: "POST",
 
-        headers: {
-        "Content-Type": "text/plain",
-        },
+    headers: {
+      "Content-Type": "text/plain",
+    },
 
-        body:JSON.stringify({
+    body: JSON.stringify({
+      action: "deleteAddress",
 
-            action:"deleteAddress",
+      id,
 
-            id,
+      customerId: customer.id,
+    }),
+  });
 
-            customerId:customer.id
-
-        })
-    });
-
-    loadAddresses();
+  loadAddresses();
 }
-
 
 async function setDefaultAddress(id) {
-    await fetch(WEB_APP_URL, {
-        method: "POST",
+  await fetch(WEB_APP_URL, {
+    method: "POST",
 
-        headers: {
-        "Content-Type": "text/plain",
-        },
+    headers: {
+      "Content-Type": "text/plain",
+    },
 
-        body:JSON.stringify({
+    body: JSON.stringify({
+      action: "setDefaultAddress",
 
-            action:"setDefaultAddress",
+      id,
 
-            id,
+      customerId: customer.id,
+    }),
+  });
 
-            customerId:customer.id
-
-        })
-    });
-
-    loadAddresses();
+  loadAddresses();
 }
 
-
 async function loadAddresses() {
-    const response = await fetch(
-        `${WEB_APP_URL}?action=getAddresses&customerId=${customer.id}`,
-    );
+  const response = await fetch(
+    `${WEB_APP_URL}?action=getAddresses&customerId=${customer.id}`,
+  );
 
-    addresses = await response.json();
+  addresses = await response.json();
 
-    renderAddresses();
+  renderAddresses();
 }
 
 function editAddress(id) {
-    const address = addresses.find((a) => String(a.id) === String(id));
+  const address = addresses.find((a) => String(a.id) === String(id));
 
-    if (!address) return;
+  if (!address) return;
 
-    addressId.value = address.id;
+  addressId.value = address.id;
 
-    addressModalTitle.textContent = "تعديل عنوان";
+  addressModalTitle.textContent = "تعديل عنوان";
 
-    saveAddressBtn.textContent = "حفظ التعديلات";
+  saveAddressBtn.textContent = "حفظ التعديلات";
 
-    addressTitle.value = address.title;
+  addressTitle.value = address.title;
 
-    receiverName.value = address.receiverName;
+  receiverName.value = address.receiverName;
 
-    receiverPhone.value = address.phone;
+  receiverPhone.value = address.phone;
 
-    loadCities(address.city);
+  loadCities(address.city);
 
-    addressText.value = address.address;
+  addressText.value = address.address;
 
-    addressLandmark.value = address.landmark;
+  addressLandmark.value = address.landmark;
 
-    defaultAddress.checked = address.isDefault;
+  defaultAddress.checked = address.isDefault;
 
-    addressModal.classList.add("show");
+  addressModal.classList.add("show");
 }
 
+function getStatus(status) {
+  switch (status) {
+    case "NEW":
+      return {
+        text: "جديد",
 
-function getStatus(status){
+        className: "orange",
+      };
 
-    switch(status){
+    case "PROCESSING":
+      return {
+        text: "جارى التجهيز",
 
-        case "NEW":
+        className: "blue",
+      };
 
-            return {
+    case "SHIPPED":
+      return {
+        text: "تم الشحن",
 
-                text:"جديد",
+        className: "purple",
+      };
 
-                className:"orange"
+    case "DELIVERED":
+      return {
+        text: "تم التسليم",
 
-            };
+        className: "green",
+      };
 
-        case "PROCESSING":
+    case "CANCELLED":
+      return {
+        text: "ملغى",
 
-            return {
+        className: "red",
+      };
 
-                text:"جارى التجهيز",
+    default:
+      return {
+        text: status,
 
-                className:"blue"
-
-            };
-
-        case "SHIPPED":
-
-            return {
-
-                text:"تم الشحن",
-
-                className:"purple"
-
-            };
-
-        case "DELIVERED":
-
-            return {
-
-                text:"تم التسليم",
-
-                className:"green"
-
-            };
-
-        case "CANCELLED":
-
-            return {
-
-                text:"ملغى",
-
-                className:"red"
-
-            };
-
-        default:
-
-            return {
-
-                text:status,
-
-                className:"gray"
-
-            };
-
-    }
-
+        className: "gray",
+      };
+  }
 }
 
-function openOrder(orderId){
+function openOrder(orderId) {
+  const responseOrder = window.customerOrders.find((o) => o.id === orderId);
 
-    const responseOrder =
-        window.customerOrders.find(o=>o.id===orderId);
+  if (!responseOrder) return;
 
-    if(!responseOrder) return;
+  const details = document.getElementById("orderDetails");
 
-    const details=document.getElementById("orderDetails");
+  let products = "";
 
-    let products = "";
-
-    responseOrder.items.forEach((item) => {
-        products += `
+  responseOrder.items.forEach((item) => {
+    products += `
 
     <div class="modal-product-card">
 
@@ -580,9 +532,9 @@ function openOrder(orderId){
     </div>
 
     `;
-    });
+  });
 
-    details.innerHTML = `
+  details.innerHTML = `
 
         <div class="order-header-box">
 
@@ -859,64 +811,48 @@ function openOrder(orderId){
         </div>
 
     `;
-    document
-        .getElementById("orderModal")
-        .classList.add("show");
-
+  document.getElementById("orderModal").classList.add("show");
 }
 
+function getTimeline(status, shippingType) {
+  let steps;
 
+  if (shippingType === "pickup") {
+    steps = [
+      { key: "NEW", text: "تم استلام الطلب" },
 
-function getTimeline(status,shippingType){
+      { key: "PROCESSING", text: "جارى التجهيز" },
 
-    let steps;
+      { key: "READY", text: "جاهز للاستلام" },
 
-    if(shippingType==="pickup"){
+      { key: "DELIVERED", text: "تم الاستلام" },
+    ];
+  } else {
+    steps = [
+      { key: "NEW", text: "تم استلام الطلب" },
 
-        steps=[
+      { key: "REVIEW", text: "تمت المراجعة" },
 
-            {key:"NEW",text:"تم استلام الطلب"},
+      { key: "PROCESSING", text: "جارى التجهيز" },
 
-            {key:"PROCESSING",text:"جارى التجهيز"},
+      { key: "PACKED", text: "تم التغليف" },
 
-            {key:"READY",text:"جاهز للاستلام"},
+      { key: "SHIPPED", text: "خرج للشحن" },
 
-            {key:"DELIVERED",text:"تم الاستلام"}
+      { key: "ONWAY", text: "فى الطريق" },
 
-        ];
+      { key: "DELIVERED", text: "تم التسليم" },
+    ];
+  }
 
-    }else{
+  const current = steps.findIndex((s) => s.key === status);
 
-    steps=[
+  let html = "";
 
-        {key:"NEW",text:"تم استلام الطلب"},
+  steps.forEach((step, index) => {
+    html += `
 
-        {key:"REVIEW",text:"تمت المراجعة"},
-
-        {key:"PROCESSING",text:"جارى التجهيز"},
-
-        {key:"PACKED",text:"تم التغليف"},
-
-        {key:"SHIPPED",text:"خرج للشحن"},
-
-        {key:"ONWAY",text:"فى الطريق"},
-
-        {key:"DELIVERED",text:"تم التسليم"}
-
-        ];
-
-    }
-
-    const current=
-        steps.findIndex(s=>s.key===status);
-
-    let html="";
-
-    steps.forEach((step,index)=>{
-
-        html+=`
-
-        <div class="timeline-item ${index<=current?"done":""}">
+        <div class="timeline-item ${index <= current ? "done" : ""}">
 
             <div class="timeline-circle">
 
@@ -933,172 +869,317 @@ function getTimeline(status,shippingType){
         </div>
 
         `;
+  });
 
-    });
-
-    return html;
-
+  return html;
 }
 
-function updateStats(orders){
+function updateStats(orders) {
+  ordersCount.textContent = orders.length;
 
-    ordersCount.textContent =
-        orders.length;
+  completedOrders.textContent = orders.filter(
+    (o) => o.status === "DELIVERED",
+  ).length;
 
-    completedOrders.textContent =
-        orders.filter(o=>o.status==="DELIVERED").length;
+  pendingOrders.textContent = orders.filter(
+    (o) => o.status !== "DELIVERED",
+  ).length;
 
-    pendingOrders.textContent =
-        orders.filter(o=>o.status!=="DELIVERED").length;
-
-    totalSpent.textContent =
-        orders
-            .reduce((s,o)=>s+Number(o.total),0)
-        +" ج.م";
-
+  totalSpent.textContent =
+    orders.reduce((s, o) => s + Number(o.total), 0) + " ج.م";
 }
-
 
 document.getElementById("ordersSearch").addEventListener("input", (e) => {
-    const value = e.target.value.trim().toLowerCase();
+  const value = e.target.value.trim().toLowerCase();
 
-    const filtered = window.customerOrders.filter((order) =>
-        order.id.toLowerCase().includes(value),
-    );
+  const filtered = window.customerOrders.filter((order) =>
+    order.id.toLowerCase().includes(value),
+  );
 
-    renderOrders(filtered);
+  renderOrders(filtered);
 });
 
+document.getElementById("saveAddressBtn").onclick = async () => {
+  await fetch(WEB_APP_URL, {
+    method: "POST",
 
-document
-.getElementById("saveAddressBtn")
-.onclick = async () => {
+    headers: {
+      "Content-Type": "text/plain",
+    },
 
-    await fetch(WEB_APP_URL,{
+    body: JSON.stringify({
+      action: addressId.value ? "updateAddress" : "saveAddress",
 
-        method:"POST",
+      id: addressId.value,
 
-        headers:{
-            "Content-Type":"text/plain"
-        },
+      customerId: customer.id,
 
-        body:JSON.stringify({
+      title: addressTitle.value,
 
-            action: addressId.value
-                ? "updateAddress"
-                : "saveAddress",
+      receiverName: receiverName.value,
 
-            id: addressId.value,
+      phone: receiverPhone.value,
 
-            customerId: customer.id,
+      city: addressCity.value,
 
-            title: addressTitle.value,
+      address: addressText.value,
 
-            receiverName: receiverName.value,
+      landmark: addressLandmark.value,
 
-            phone: receiverPhone.value,
+      isDefault: defaultAddress.checked,
+    }),
+  });
 
-            city: addressCity.value,
+  // تنظيف الفورم
+  addressId.value = "";
 
-            address: addressText.value,
+  addressTitle.value = "";
 
-            landmark: addressLandmark.value,
+  receiverName.value = "";
 
-            isDefault: defaultAddress.checked
+  receiverPhone.value = "";
 
-        })
+  loadCities();
 
-    });
+  addressText.value = "";
 
-    // تنظيف الفورم
-    addressId.value = "";
+  addressLandmark.value = "";
 
-    addressTitle.value = "";
+  defaultAddress.checked = false;
 
-    receiverName.value = "";
+  // غلق المودال
+  document.getElementById("addressModal").classList.remove("show");
 
-    receiverPhone.value = "";
-
-    loadCities();
-
-    addressText.value = "";
-
-    addressLandmark.value = "";
-
-    defaultAddress.checked = false;
-
-    // غلق المودال
-    document
-    .getElementById("addressModal")
-    .classList.remove("show");
-
-    // تحديث القائمة
-    loadAddresses();
-
+  // تحديث القائمة
+  loadAddresses();
 };
 
 const panels = document.querySelectorAll(".account-panel");
 const tabs = document.querySelectorAll(".account-tab");
 
-tabs.forEach(tab=>{
+tabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.tab;
 
-    tab.addEventListener("click",()=>{
+    if (!target) return;
 
-        const target = tab.dataset.tab;
+    tabs.forEach((btn) => btn.classList.remove("active"));
 
-        if(!target) return;
+    tab.classList.add("active");
 
-        tabs.forEach(btn=>btn.classList.remove("active"));
+    panels.forEach((panel) => {
+      panel.classList.remove("active");
 
-        tab.classList.add("active");
-
-        panels.forEach(panel=>{
-
-            panel.classList.remove("active");
-
-            panel.style.display="none";
-
-        });
-
-        const current=document.getElementById(target+"Panel");
-
-        if(current){
-
-            current.style.display="block";
-
-            current.classList.add("active");
-
-        }
-
+      panel.style.display = "none";
     });
 
+    const current = document.getElementById(target + "Panel");
+
+    if (current) {
+      current.style.display = "block";
+
+      current.classList.add("active");
+    }
+  });
 });
 
 logoutBtn.onclick = () => {
-    localStorage.removeItem("mesk_customer");
+  localStorage.removeItem("mesk_customer");
 
-    location.href = "index.html";
+  location.href = "index.html";
 };
 
 addAddressBtn.onclick = () => {
-    addressId.value = "";
+  addressId.value = "";
 
-    addressModalTitle.textContent = "إضافة عنوان";
+  addressModalTitle.textContent = "إضافة عنوان";
 
-    saveAddressBtn.textContent = "حفظ";
+  saveAddressBtn.textContent = "حفظ";
 
-    document.getElementById("addressModal").classList.add("show");
+  document.getElementById("addressModal").classList.add("show");
 };
 
 closeAddressModal.onclick = () => {
-    addressModal.classList.remove("show");
+  addressModal.classList.remove("show");
 };
 
 addressModal.onclick = (e) => {
-    if (e.target === addressModal) {
-        addressModal.classList.remove("show");
-    }
+  if (e.target === addressModal) {
+    addressModal.classList.remove("show");
+  }
 };
+
+document.getElementById("changePasswordBtn").onclick = changePassword;
+async function changePassword() {
+    const oldPassword = document.getElementById("oldPassword").value;
+
+    const newPassword = document.getElementById("newAccountPassword").value;
+
+    const confirmPassword = document.getElementById(
+        "confirmAccountPassword",
+    ).value;
+
+    if (!oldPassword || !newPassword) {
+        Swal.fire({
+        icon: "warning",
+
+        title: "أكمل البيانات",
+        });
+
+        return;
+    }
+
+    if (newPassword != confirmPassword) {
+        Swal.fire({
+        icon: "error",
+
+        title: "كلمتا المرور غير متطابقتين",
+        });
+
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        Swal.fire({
+        icon: "warning",
+
+        title: "كلمة المرور قصيرة يجب ان تكون على الاقل 6 حروف او ارقام",
+        });
+
+        return;
+    }
+
+    if (oldPassword === newPassword) {
+        Swal.fire({
+            icon: "warning",
+
+            title: "كلمة المرور الجديدة يجب أن تختلف عن الحالية",
+        });
+
+        return;
+    }
+
+    const response = await fetch(WEB_APP_URL, {
+        method: "POST",
+
+        headers: {
+        "Content-Type": "text/plain",
+        },
+
+        body: JSON.stringify({
+        action: "changePassword",
+
+        customerId: customer.id,
+
+        oldPassword,
+
+        newPassword,
+        }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+        Swal.fire({
+        icon: "success",
+
+        title: "تم تغيير كلمة المرور",
+        });
+
+        document.getElementById("oldPassword").value = "";
+
+        document.getElementById("newAccountPassword").value = "";
+
+        document.getElementById("confirmAccountPassword").value = "";
+    } else {
+        Swal.fire({
+        icon: "error",
+
+        title: result.message,
+        });
+    }
+}
+
+async function updateProfile() {
+    const name = document.getElementById("editCustomerName").value.trim();
+
+    const phone = document.getElementById("editCustomerPhone").value.trim();
+
+    const email = document.getElementById("editCustomerEmail").value.trim();
+
+    if (!name || !phone) {
+        Swal.fire({
+        icon: "warning",
+
+        title: "أكمل البيانات",
+        });
+
+        return;
+    }
+
+    const response = await fetch(WEB_APP_URL, {
+        method: "POST",
+
+        headers: {
+        "Content-Type": "text/plain",
+        },
+
+        body: JSON.stringify({
+        action: "updateCustomerProfile",
+
+        customerId: customer.id,
+
+        name,
+
+        phone,
+
+        email,
+
+        password,
+        }),
+    });
+
+    const password = document.getElementById("profilePassword").value;
+
+    if (!password) {
+        Swal.fire({
+            icon: "warning",
+            title: "اكتب كلمة المرور الحالية",
+        });
+
+        return;
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+        customer.name = name;
+        customer.phone = normalizePhone(phone);
+        customer.email = email;
+
+        localStorage.setItem("mesk_customer", JSON.stringify(customer));
+
+        document.getElementById("accountName").textContent = name;
+        document.getElementById("accountPhone").textContent = phone;
+
+        document.getElementById("profilePassword").value = "";
+
+        localStorage.setItem("mesk_customer", JSON.stringify(customer));
+
+        Swal.fire({
+        icon: "success",
+
+        title: "تم حفظ البيانات",
+        });
+    } else {
+        Swal.fire({
+        icon: "error",
+
+        title: result.message,
+        });
+    }
+}
+document.getElementById("saveProfileBtn").onclick = updateProfile;
 
 loadOrders();
 loadAddresses();

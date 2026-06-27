@@ -193,8 +193,40 @@
         
                     <input type="text" id="adminSearch" class="admin-search" placeholder="ابحث عن منتج...">
         
+                    <select id="productsSort" class="admin-search">
+                        <option value="newest">الأحدث</option>
+                        <option value="oldest">الأقدم</option>
+                        <option value="name">الاسم</option>
+                        <option value="priceLow">السعر: الأقل أولاً</option>
+                        <option value="priceHigh">السعر: الأعلى أولاً</option>
+                        <option value="stockLow">المخزون: الأقل</option>
+                        <option value="stockHigh">المخزون: الأعلى</option>
+                    </select>
+
+                    <div class="bulk-toolbar">
+                    
+                        <button id="selectAllBtn">
+                    
+                            تحديد الكل
+                    
+                        </button>
+                    
+                        <button id="deleteSelectedBtn">
+                    
+                            حذف المحدد
+                    
+                        </button>
+                    
+                        <span id="selectedCount">
+                    
+                            0 منتج محدد
+                    
+                        </span>
+                    
+                    </div>
                     <div id="productsTable"></div>
         
+                    <div id="productsPagination" class="products-pagination"></div>
                 </div>
         
             </div>
@@ -271,7 +303,7 @@
                 
                         <input id="ordersSearch" class="admin-search" placeholder="ابحث برقم الطلب أو اسم العميل">
                 
-                        <select id="ordersFilter">
+                        <select id="ordersFilter" class="order-status-select">
                 
                             <option value="all">
                 
@@ -386,6 +418,20 @@
         </div>
     
     </div>
+
+        <div id="imageViewer" class="image-viewer">
+
+        <span class="close-viewer" onclick="closeImageViewer()">
+
+            &times;
+
+        </span>
+
+        <img id="viewerImage">
+
+    </div>
+
+    <div id="toast"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="admin.js"></script>

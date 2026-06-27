@@ -9,6 +9,11 @@ const IMGBB_API_KEY = "725d3e4c50df666dca90e19e483a2a8d";
 =========================================================== */
 
 let products = [];
+let selectedProducts = [];
+const PRODUCTS_PER_PAGE = 20;
+
+let currentPage = 1;
+
 const meskAlert = Swal.mixin({
   target: document.body,
   background: "#ffffff",
@@ -23,6 +28,18 @@ const meskAlert = Swal.mixin({
     cancelButton: "mesk-cancel",
   },
 });
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+
+  toast.innerHTML = message;
+
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
+}
 
 let editMode = false;
 let editProductId = null;
@@ -405,42 +422,104 @@ async function fetchProducts() {
 =========================================================== */
 
 // دالة عرض المنتجات
-async function renderProductsTable() {
-  products = await fetchProducts();
+async function renderProductsTable(list = null) {
+  if (!products.length) {
+    products = await fetchProducts();
+  }
+
+  const data = list ?? products;
+
+  const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+
+  const end = start + PRODUCTS_PER_PAGE;
+
+  const pageProducts = data.slice(start, end);
+
   const table = document.getElementById("productsTable");
+
   table.innerHTML = "";
 
-  products.forEach((product) => {
+  pageProducts.forEach((product) => {
     let stockWarning = "";
 
     if (Number(product.stock) <= 0) {
       stockWarning = `
-      <div class="out-stock-warning">
+        <div class="out-stock-warning">
         ❌ نفد المخزون
-      </div>
-    `;
-    } else if (Number(product.stock) <= 5) {
-      stockWarning = `
-      <div class="low-stock-warning">
-        ⚠ متبقي ${product.stock} فقط
-      </div>
-    `;
-    }
-    table.innerHTML += `
-        <div class="admin-product-card">
-        <img src="${product.imageUrl}" class="admin-product-image">
-        <div class="admin-card-body">
-        <h3>${product.name}</h3>
-        <p>${product.price} ج.م</p>
-          ${stockWarning}
-        <div class="admin-actions">
-        <button class="edit-btn" data-id="${product.id}">تعديل</button>
-        <button class="delete-btn" data-id="${product.id}">حذف</button>
-        </div>
-        </div>
         </div>
         `;
+    } else if (Number(product.stock) <= 5) {
+      stockWarning = `
+        <div class="low-stock-warning">
+        ⚠ متبقي ${product.stock} فقط
+        </div>
+        `;
+    }
+
+    table.innerHTML += `
+
+        <div class="admin-product-card">
+
+          <div class="product-select">
+
+          <input
+          type="checkbox"
+          class="product-checkbox"
+          value="${product.id}">
+
+          </div>
+
+        <img src="${product.imageUrl}" class="admin-product-image">
+
+        <div class="admin-card-body">
+
+        <h3>${product.name}</h3>
+
+        <p>${product.price} ج.م</p>
+
+        ${stockWarning}
+
+        <div class="admin-actions">
+
+        <button class="edit-btn" data-id="${product.id}">
+        تعديل
+        </button>
+
+        <button class="delete-btn" data-id="${product.id}">
+        حذف
+        </button>
+
+        </div>
+
+        </div>
+
+        </div>
+
+      `;
   });
+  renderPagination(data.length);
+}
+
+function copyCustomer(orderId) {
+  const order = orders.find((o) => String(o.id) === String(orderId));
+
+  if (!order) return;
+
+  const text = `
+
+    الاسم : ${order.customerName}
+
+    الهاتف : ${order.phone}
+
+    العنوان : ${order.address}
+
+    المدينة : ${order.city}
+
+  `;
+
+  navigator.clipboard.writeText(text);
+
+  showToast("✅ تم نسخ البيانات");
 }
 
 async function deleteProduct(id) {
@@ -790,6 +869,35 @@ document
     renderImagesPreview();
   });
 
+function renderPagination(totalItems) {
+  const container = document.getElementById("productsPagination");
+
+  container.innerHTML = "";
+
+  const totalPages = Math.ceil(totalItems / PRODUCTS_PER_PAGE);
+
+  if (totalPages <= 1) {
+    return;
+  }
+
+  for (let i = 1; i <= totalPages; i++) {
+    container.innerHTML += `
+
+<button
+
+class="page-btn ${i === currentPage ? "active" : ""}"
+
+data-page="${i}"
+
+>
+
+${i}
+
+</button>
+
+`;
+  }
+}
 async function updateDashboard() {
   const products = await fetchProducts();
   document.getElementById("productsCount").textContent = products.length;
@@ -808,6 +916,40 @@ document.getElementById("productsTable").addEventListener("click", (e) => {
     deleteProduct(id);
   }
 });
+
+document.addEventListener("change", (e) => {
+  if (e.target.classList.contains("product-checkbox")) {
+    updateSelectedProducts();
+  }
+});
+
+document.getElementById("selectAllBtn").onclick = function () {
+  const boxes = document.querySelectorAll(".product-checkbox");
+
+  const allChecked = [...boxes].every((b) => b.checked);
+
+  boxes.forEach((box) => {
+    box.checked = !allChecked;
+  });
+
+  updateSelectedProducts();
+};
+
+document
+  .getElementById("deleteSelectedBtn")
+  .addEventListener("click", deleteSelectedProducts);
+
+document
+
+  .getElementById("productsPagination")
+
+  .addEventListener("click", (e) => {
+    if (!e.target.classList.contains("page-btn")) return;
+
+    currentPage = Number(e.target.dataset.page);
+
+    filterAndRenderProducts();
+  });
 
 /* ===========================================================
     ORDERS
@@ -857,6 +999,363 @@ function filterOrders() {
   });
 }
 
+function filterOrdersReturn() {
+  const search = ordersSearch.value.trim().toLowerCase();
+
+  const status = ordersFilter.value;
+
+  return orders.filter((order) => {
+    const matchSearch =
+      order.id.toLowerCase().includes(search) ||
+      order.customerName.toLowerCase().includes(search) ||
+      String(order.phone).includes(search);
+
+    const matchStatus = status === "all" || order.status === status;
+
+    return matchSearch && matchStatus;
+  });
+}
+
+function printOrder(orderId) {
+  const order = orders.find((o) => String(o.id) === String(orderId));
+
+  if (!order) return;
+
+  const productsHTML = order.items
+    .map(
+      (item) => `
+      <tr>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>${item.price} ج.م</td>
+          <td>${item.qty * item.price} ج.م</td>
+      </tr>
+  `,
+    )
+    .join("");
+
+  const win = window.open("", "_blank");
+
+  win.document.write(`
+    <!DOCTYPE html>
+
+    <html lang="ar" dir="rtl">
+
+    <head>
+
+    <meta charset="UTF-8">
+
+    <title>فاتورة ${order.id}</title>
+
+    <style>
+
+      *{
+      box-sizing:border-box;
+      font-family:Cairo,sans-serif;
+      }
+
+      body{
+      padding:40px;
+      background:white;
+      color:#222;
+      }
+
+      .invoice{
+
+      max-width:850px;
+
+      margin:auto;
+
+      }
+
+      .header{
+
+      text-align:center;
+
+      border-bottom:2px solid #ddd;
+
+      padding-bottom:20px;
+
+      margin-bottom:25px;
+
+      }
+
+      .header h1{
+
+      margin:10px 0;
+
+      font-size:30px;
+
+      }
+
+      .info{
+
+      display:flex;
+
+      justify-content:space-between;
+
+      margin-bottom:25px;
+
+      }
+
+      .section{
+
+      margin-bottom:25px;
+
+      }
+
+      table{
+
+      width:100%;
+
+      border-collapse:collapse;
+
+      }
+
+      th,td{
+
+      border:1px solid #ddd;
+
+      padding:12px;
+
+      text-align:center;
+
+      }
+
+      th{
+
+      background:#f5f5f5;
+
+      }
+
+      .summary{
+
+      margin-top:25px;
+
+      width:320px;
+
+      margin-right:auto;
+
+      }
+
+      .summary div{
+
+      display:flex;
+
+      justify-content:space-between;
+
+      padding:8px 0;
+
+      }
+
+      .total{
+
+      font-size:22px;
+
+      font-weight:bold;
+
+      border-top:2px solid #000;
+
+      padding-top:10px;
+
+      }
+
+      .footer{
+
+      margin-top:50px;
+
+      text-align:center;
+
+      font-size:18px;
+
+      }
+
+      @media print{
+
+      body{
+
+      margin:0;
+
+      padding:15mm;
+
+      }
+
+      }
+
+    </style>
+
+    </head>
+
+    <body>
+
+    <div class="invoice">
+
+    <div class="header">
+
+    <h1> <i class="fa-solid fa-book-open"></i> مسك التراث</h1>
+
+    <p>فاتورة طلب</p>
+
+    </div>
+
+    <div class="info">
+
+    <div>
+
+    <b>رقم الطلب</b>
+
+    <br>
+
+    ${order.id}
+
+    </div>
+
+    <div>
+
+    <b>تاريخ الطلب</b>
+
+    <br>
+
+    ${formatAdminDate(order.createdAt)}
+
+    </div>
+
+    </div>
+
+    <div class="section">
+
+    <h3>بيانات العميل</h3>
+
+    <p><b>الاسم:</b> ${order.customerName}</p>
+
+    <p><b>الهاتف:</b> 0${order.phone}</p>
+
+    <p><b>المدينة:</b> ${order.city}</p>
+
+    <p><b>العنوان:</b> ${order.address}</p>
+
+    </div>
+
+    <div class="section">
+
+    <h3>المنتجات</h3>
+
+    <table>
+
+    <thead>
+
+    <tr>
+
+    <th>المنتج</th>
+
+    <th>الكمية</th>
+
+    <th>السعر</th>
+
+    <th>الإجمالى</th>
+
+    </tr>
+
+    </thead>
+
+    <tbody>
+
+    ${productsHTML}
+
+    </tbody>
+
+    </table>
+
+    </div>
+
+    <div class="summary">
+
+    <div>
+
+    <span>الإجمالى</span>
+
+    <b>${order.total} ج.م</b>
+
+    </div>
+
+    <div>
+
+    <span>الشحن</span>
+
+    <b>${order.shipping} ج.م</b>
+
+    </div>
+
+    <div>
+
+    <span>الخصم</span>
+
+    <b>${order.discount} ج.م</b>
+
+    </div>
+
+    <div>
+
+    <span>الدفع</span>
+
+    <b>${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع إلكترونياً"}</b>
+
+    </div>
+
+    <div class="total">
+
+    <span>الإجمالى النهائى</span>
+
+    <b>${order.total} ج.م</b>
+
+    </div>
+
+    </div>
+
+    <div class="footer">
+
+    شكراً لتسوقكم من ❤️ مسك التراث
+
+    </div>
+
+    </div>
+
+    <script>
+
+    window.onload=function(){
+
+    window.print();
+
+    window.onafterprint=function(){
+
+    window.close();
+
+    }
+
+    }
+
+    </script>
+
+    </body>
+
+    </html>
+  `);
+
+  win.document.close();
+}
+
+function updatePaymentStatusColor(select) {
+  select.className = "payment-status-select";
+
+  select.classList.add(select.value.toLowerCase());
+}
+
+document.addEventListener("change", (e) => {
+  if (e.target.classList.contains("payment-status-select")) {
+    updatePaymentStatusColor(e.target);
+  }
+});
+
 
 function updateStatusColor(select) {
   select.className = "order-status-select";
@@ -869,6 +1368,30 @@ ordersCards.addEventListener("change", (e) => {
     updateStatusColor(e.target);
   }
 });
+
+function getPaymentBadge(status) {
+  switch (status) {
+    case "PAID":
+      return `<span class="payment-badge paid">
+            ✅ مدفوع
+            </span>`;
+
+    case "PARTIAL":
+      return `<span class="payment-badge partial">
+            🟠 مدفوع جزئياً
+            </span>`;
+
+    case "REFUNDED":
+      return `<span class="payment-badge refunded">
+            🔵 مسترجع
+            </span>`;
+
+    default:
+      return `<span class="payment-badge pending">
+            🔴 غير مدفوع
+            </span>`;
+  }
+}
 
 
 function renderOrders(list = orders) {
@@ -895,29 +1418,53 @@ function renderOrders(list = orders) {
 
                 <div>
 
-                    <strong>${order.id}</strong>
+                  <strong>${order.id}</strong>
 
-                    <select
-                      class="order-status-select"
-                      data-id="${order.id}">
+                  <select
+                    class="order-status-select"
+                    data-id="${order.id}">
 
-                        <option value="NEW">جديد</option>
+                      <option value="NEW"
+                      ${order.status === "NEW" ? "selected" : ""}>
+                      جديد
+                      </option>
 
-                        <option value="REVIEW">تمت المراجعة</option>
+                      <option value="REVIEW"
+                      ${order.status === "REVIEW" ? "selected" : ""}>
+                      تمت المراجعة
+                      </option>
 
-                        <option value="PROCESSING">جارى التجهيز</option>
+                      <option value="PROCESSING"
+                      ${order.status === "PROCESSING" ? "selected" : ""}>
+                      جارى التجهيز
+                      </option>
 
-                        <option value="PACKED">تم التغليف</option>
+                      <option value="PACKED"
+                      ${order.status === "PACKED" ? "selected" : ""}>
+                      تم التغليف
+                      </option>
 
-                        <option value="SHIPPED">خرج للشحن</option>
+                      <option value="SHIPPED"
+                      ${order.status === "SHIPPED" ? "selected" : ""}>
+                      خرج للشحن
+                      </option>
 
-                        <option value="ONWAY">فى الطريق</option>
+                      <option value="ONWAY"
+                      ${order.status === "ONWAY" ? "selected" : ""}>
+                      فى الطريق
+                      </option>
 
-                        <option value="DELIVERED">تم التسليم</option>
+                      <option value="DELIVERED"
+                      ${order.status === "DELIVERED" ? "selected" : ""}>
+                      تم التسليم
+                      </option>
 
-                        <option value="CANCELLED">تم الإلغاء</option>
+                      <option value="CANCELLED"
+                      ${order.status === "CANCELLED" ? "selected" : ""}>
+                      تم الإلغاء
+                      </option>
 
-                    </select>
+                  </select>
 
                 </div>
 
@@ -937,7 +1484,7 @@ function renderOrders(list = orders) {
 
                 <span class="payment-badge">
 
-                  ${order.paymentStatus}
+                  ${getPaymentBadge(order.paymentStatus)}
 
                 </span>
                 <p>
@@ -1034,8 +1581,10 @@ function renderOrders(list = orders) {
 
         `;
   });
+  document.querySelectorAll(".order-status-select").forEach((select) => {
+    updateStatusColor(select);
+  });
 }
-
 
 function openWhatsapp(phone) {
   window.open(
@@ -1043,6 +1592,34 @@ function openWhatsapp(phone) {
 
     "_blank",
   );
+}
+
+async function updatePaymentStatus(id, status) {
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain",
+    },
+    body: JSON.stringify({
+      action: "updatePaymentStatus",
+
+      id,
+
+      paymentStatus: status,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    showToast("تم تحديث حالة الدفع");
+
+    await loadOrders();
+
+    openOrderDetails(id);
+
+    updatePaymentStatusColor(paymentSelect);
+  }
 }
 
 function formatAdminDate(date) {
@@ -1058,6 +1635,22 @@ function formatAdminDate(date) {
     minute: "2-digit",
   });
 }
+
+function openImageViewer(src) {
+  document.getElementById("viewerImage").src = src;
+
+  document.getElementById("imageViewer").classList.add("show");
+}
+
+function closeImageViewer() {
+  document.getElementById("imageViewer").classList.remove("show");
+}
+
+document.getElementById("imageViewer").addEventListener("click", function (e) {
+  if (e.target === this) {
+    closeImageViewer();
+  }
+});
 async function deleteOrder(id) {
   const result = await meskAlert.fire({
     icon: "warning",
@@ -1124,150 +1717,331 @@ async function openOrderDetails(orderId) {
   order.items.forEach((item) => {
     itemsHTML += `
 
-      <div class="order-product">
+    <div class="modal-product-card">
 
-      <img src="${item.imageUrl}" class="order-product-image">
+    <img
+    src="${item.imageUrl}"
+    class="modal-product-image"
+    onclick="openImageViewer('${item.imageUrl}')">
 
-      <div class="order-product-info">
+    <div class="modal-product-info">
 
-      <h3>${item.name}</h3>
+      <h3>
 
-      <p>
+      ${item.name}
 
-      ${item.qty} × ${item.price} ج.م
+      </h3>
 
-      </p>
+      <span class="product-qty">
 
-      <p>
-
-      الإجمالى :
-
-      ${item.qty * item.price} ج.م
-
-      </p>
-
-      </div>
-
-      </div>
-
-      `;
-        });
-
-        let logsHTML = "";
-
-        logs.reverse().forEach((log) => {
-          logsHTML += `
-
-      <div class="timeline-item">
-
-      <div class="timeline-circle"></div>
-
-      <div class="timeline-content">
-
-      <strong>
-
-      ${log.newStatus}
-
-      </strong>
-
-      <p>
-
-      ${log.message || ""}
-
-      </p>
-
-      <small>
-
-      ${formatAdminDate(log.createdAt)}
-
-      </small>
-
-      </div>
-
-      </div>
-
-      `;
-        });
-
-        orderDetailsContent.innerHTML = `
-
-      <div class="order-details-wrapper">
-
-      <div class="order-top">
-
-      <h2>
-
-      ${order.id}
-
-      </h2>
-
-      <span class="payment-badge">
-
-      ${order.paymentStatus}
+      ${item.qty} قطعة
 
       </span>
 
+    <div>
+
+    الكمية :
+    <b>${item.qty}</b>
+
+    </div>
+
+    <div>
+
+    السعر :
+
+    <b>${item.price} ج.م</b>
+
+    </div>
+
+    <div>
+
+    الإجمالى :
+
+    <b>${item.qty * item.price} ج.م</b>
+
+    </div>
+
+    </div>
+
+    </div>
+
+    `;
+  });
+
+    let logsHTML = "";
+
+    if (Array.isArray(logs) && logs.length > 0) {
+      logs.forEach((log) => {
+        logsHTML += `
+        <div class="timeline-item">
+
+          <div class="timeline-dot ${log.newStatus}"></div>
+
+          <div class="timeline-content">
+
+            <strong>${log.newStatus || ""}</strong>
+
+            <p>${log.message || ""}</p>
+
+            <small>${formatAdminDate(log.createdAt)}</small>
+
+          </div>
+
+        </div>
+      `;
+      });
+    } else {
+      logsHTML = `
+      <div class="timeline-empty">
+        لا يوجد سجل للطلب حتى الآن
+      </div>
+    `;
+    }
+
+        orderDetailsContent.innerHTML = `
+
+          <div class="order-header-box">
+
+                <div class="order-header-left">
+                    <h2>#${order.id}</h2>
+                    <p>${formatAdminDate(order.createdAt)}</p>
+                </div>
+
+                <div class="order-header-right">
+                        ${getPaymentBadge(order.paymentStatus)}
+                    <button
+                      class="action-btn print-order-btn"
+                      data-id="${order.id}"
+                      onclick="printOrder('${order.id}')">
+                      🖨️ طباعة
+                    </button>
+                </div>
+
+          </div>
+
+          <div class="order-actions">
+
+            <select
+              class="order-status-select modal-status-select"
+              data-id="${order.id}"
+              onchange="updateOrderStatus('${order.id}',this.value)">
+
+            <option value="NEW" ${order.status === "NEW" ? "selected" : ""}>🟡 جديد</option>
+
+            <option value="REVIEW" ${order.status === "REVIEW" ? "selected" : ""}>🔵 تمت المراجعة</option>
+
+            <option value="PROCESSING" ${order.status === "PROCESSING" ? "selected" : ""}>🟣 جاري التجهيز</option>
+
+            <option value="PACKED" ${order.status === "PACKED" ? "selected" : ""}>📦 تم التغليف</option>
+
+            <option value="SHIPPED" ${order.status === "SHIPPED" ? "selected" : ""}>🚚 خرج للشحن</option>
+
+            <option value="ONWAY" ${order.status === "ONWAY" ? "selected" : ""}>🚛 في الطريق</option>
+
+            <option value="DELIVERED" ${order.status === "DELIVERED" ? "selected" : ""}>🟢 تم التسليم</option>
+
+            <option value="CANCELLED" ${order.status === "CANCELLED" ? "selected" : ""}>🔴 تم الإلغاء</option>
+
+            </select>
+
+            <div class="payment-actions">
+
+              <select
+              class="payment-status-select"
+              onchange="updatePaymentStatus('${order.id}',this.value)">
+
+              <option value="PENDING" ${order.paymentStatus == "PENDING" ? "selected" : ""}>🔴 غير مدفوع</option>
+
+              <option value="PARTIAL" ${order.paymentStatus == "PARTIAL" ? "selected" : ""}>🟠 مدفوع جزئياً</option>
+
+              <option value="PAID" ${order.paymentStatus == "PAID" ? "selected" : ""}>🟢 مدفوع</option>
+
+              <option value="REFUNDED" ${order.paymentStatus == "REFUNDED" ? "selected" : ""}>🔵 تم رد المبلغ</option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+      <div class="order-section">
+
+        <h3 class="order-section-title">
+
+        👤 بيانات العميل
+
+        </h3>
+
+        <div class="customer-grid">
+
+        <div>
+
+        📛
+
+        <span>
+
+        ${order.customerName}
+
+        </span>
+
+        </div>
+
+        <div>
+
+        📞
+
+        <span>
+
+        ${order.phone}
+
+        </span>
+
+        </div>
+
+        <div>
+
+        📍
+
+        <span>
+
+        ${order.city}
+
+        </span>
+
+        </div>
+
+          <div>
+
+          🏠
+
+            <span>
+
+            ${order.address}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="customer-actions">
+
+        <button class="action-btn copy-customer-btn"
+
+          onclick="copyCustomer('${order.id}')">
+
+          📋 نسخ البيانات
+
+        </button>
+
+
+        <a href="tel:0${order.phone}" class="customer-btn">
+
+        📞 اتصال
+
+        </a>
+
+        <a
+
+        target="_blank"
+
+        href="https://wa.me/20${order.phone}"
+
+        class="customer-btn">
+
+        <i class="fab fa-whatsapp"></i> واتساب
+
+        </a>
+
       </div>
 
       <div class="order-section">
 
-      <h3>
+        <h3 class="order-section-title">
+            🛒 المنتجات (${order.items.length})
+        </h3>
 
-      بيانات العميل
-
-      </h3>
-
-      <p><b>الاسم :</b> ${order.customerName}</p>
-
-      <p><b>الهاتف :</b> ${order.phone}</p>
-
-      <p><b>المحافظة :</b> ${order.city}</p>
-
-      <p><b>العنوان :</b> ${order.address}</p>
+        ${itemsHTML}
 
       </div>
 
       <div class="order-section">
 
-      <h3>
+        <h3 class="order-section-title">
 
-      المنتجات
+        💰 ملخص الطلب
 
-      </h3>
+        </h3>
 
-      ${itemsHTML}
+        <div class="summary-card">
 
-      </div>
+        <div>
 
-      <div class="order-section">
+        <span>الإجمالى</span>
 
-      <h3>
+        <b>${order.total} ج.م</b>
 
-      ملخص الطلب
+        </div>
 
-      </h3>
+        <div>
 
-      <p>الإجمالى : ${order.total} ج.م</p>
+        <span>الشحن</span>
 
-      <p>الشحن : ${order.shipping} ج.م</p>
+        <b>${order.shipping} ج.م</b>
 
-      <p>الخصم : ${order.discount} ج.م</p>
+        </div>
 
-      <p>
+        <div>
 
-      طريقة الدفع :
+        <span>الخصم</span>
 
-      ${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع إلكترونياً"}
+        <b>${order.discount} ج.م</b>
 
-      </p>
+        </div>
 
-      <p>
+        <div>
 
-      حالة الطلب :
+        <span>طريقة الدفع</span>
 
-      ${order.status}
+        <b>
 
-      </p>
+        ${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع إلكترونياً"}
+
+        </b>
+
+        </div>
+
+        <div>
+
+        <span>نوع الاستلام</span>
+
+        <b>
+
+        ${order.shippingType == "pickup" ? "استلام من المتجر" : "شحن"}
+
+        </b>
+
+        </div>
+
+        <div class="summary-total">
+
+        <span>
+
+        الإجمالى النهائى
+
+        </span>
+
+        <b>
+
+        ${order.total} ج.م
+
+        </b>
+
+        </div>
+
+        </div>
 
       </div>
 
@@ -1291,7 +2065,19 @@ async function openOrderDetails(orderId) {
 
     `;
 
-  orderModal.classList.add("active");
+    const modalSelect = document.querySelector(".modal-status-select");
+
+    if (modalSelect) {
+      updateStatusColor(modalSelect);
+    }
+
+    const paymentSelect = document.querySelector(".payment-status-select");
+
+    if (paymentSelect) {
+      updatePaymentStatusColor(paymentSelect);
+    }
+
+  orderModal.classList.add("show");
 }
 
 
@@ -1349,42 +2135,62 @@ ordersCards.addEventListener("change", async (e) => {
 });
 
 closeOrderModal.onclick = () => {
-  orderModal.classList.remove("active");
+  orderModal.classList.remove("show");
 };
 
 orderModal.onclick = (e) => {
   if (e.target === orderModal) {
-    orderModal.classList.remove("active");
+    orderModal.classList.remove("show");
   }
 };
 
 async function updateOrderStatus(id, status) {
-  const response = await fetch(WEB_APP_URL, {
-    method: "POST",
+  const order = orders.find((o) => String(o.id) === String(id));
 
-    headers: {
-      "Content-Type": "text/plain",
-    },
+  if (!order) return;
 
-    body: JSON.stringify({
-      action: "updateOrderStatus",
+  const oldStatus = order.status;
 
-      id,
+  // Optimistic UI
+  order.status = status;
 
-      status,
-    }),
-  });
+  renderOrders(filterOrdersReturn());
 
-  const result = await response.json();
+  if (orderModal.classList.contains("show")) {
+    openOrderDetails(id);
+  }
 
-  if (result.success) {
-    meskAlert.fire({
-      icon: "success",
-
-      title: "تم تحديث الحالة",
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain",
+      },
+      body: JSON.stringify({
+        action: "updateOrderStatus",
+        id,
+        status,
+      }),
     });
 
-    loadOrders();
+    const result = await response.json();
+
+    if (!result.success) throw new Error();
+
+    showToast("✅ تم تحديث الحالة");
+  } catch (err) {
+    order.status = oldStatus;
+
+    renderOrders(filterOrdersReturn());
+
+    if (orderModal.classList.contains("show")) {
+      openOrderDetails(id);
+    }
+
+    meskAlert.fire({
+      icon: "error",
+      title: "فشل تحديث الحالة",
+    });
   }
 }
 
@@ -1502,9 +2308,76 @@ function initDashboardAccordion() {
   });
 }
 
+async function deleteSelectedProducts() {
+  if (!selectedProducts.length) {
+    meskAlert.fire({
+      icon: "warning",
+
+      title: "لم تحدد أي منتجات",
+    });
+
+    return;
+  }
+
+  const result = await meskAlert.fire({
+    icon: "warning",
+
+    title: "حذف المنتجات",
+
+    text: `سيتم حذف ${selectedProducts.length} منتج`,
+
+    showCancelButton: true,
+
+    confirmButtonText: "حذف",
+
+    cancelButtonText: "إلغاء",
+  });
+
+  if (!result.isConfirmed) return;
+
+  await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "deleteMultiple",
+
+      ids: selectedProducts,
+    }),
+  });
+
+  selectedProducts = [];
+
+  document.getElementById("selectedCount").textContent = "0 منتج محدد";
+
+  products = [];
+
+  await renderProductsTable();
+
+  await loadDashboardStats();
+
+  meskAlert.fire({
+    icon: "success",
+
+    title: "تم حذف المنتجات",
+  });
+}
+
 /* ===========================================================
     INIT
 =========================================================== */
+
+function updateSelectedProducts() {
+  selectedProducts = [
+    ...document.querySelectorAll(".product-checkbox:checked"),
+  ].map((c) => c.value);
+
+  document.getElementById("selectedCount").textContent =
+    selectedProducts.length + " منتج محدد";
+}
 
 async function initAdmin() {
     await refreshCategoriesUI();
@@ -1514,5 +2387,73 @@ async function initAdmin() {
     await loadOrders();
     initDashboardAccordion();
 }
+
+function filterAndRenderProducts() {
+  const text = document
+    .getElementById("adminSearch")
+    .value.toLowerCase()
+    .trim();
+
+  const sort = document.getElementById("productsSort").value;
+
+  let filtered = [...products];
+  if (currentPage < 1) {
+    currentPage = 1;
+  }
+
+  if (text) {
+    filtered = filtered.filter(
+      (product) =>
+        product.name.toLowerCase().includes(text) ||
+        String(product.price).includes(text) ||
+        (product.category || "").toLowerCase().includes(text),
+    );
+  }
+
+  switch (sort) {
+    case "oldest":
+      filtered.sort((a, b) => Number(a.id) - Number(b.id));
+      break;
+
+    case "name":
+      filtered.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+      break;
+
+    case "priceLow":
+      filtered.sort((a, b) => a.price - b.price);
+      break;
+
+    case "priceHigh":
+      filtered.sort((a, b) => b.price - a.price);
+      break;
+
+    case "stockLow":
+      filtered.sort((a, b) => a.stock - b.stock);
+      break;
+
+    case "stockHigh":
+      filtered.sort((a, b) => b.stock - a.stock);
+      break;
+
+    default:
+      filtered.sort((a, b) => Number(b.id) - Number(a.id));
+  }
+
+  const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
+
+  if (currentPage > totalPages) {
+    currentPage = Math.max(totalPages, 1);
+  }
+
+  renderProductsTable(filtered);
+}
+
+document
+  .getElementById("adminSearch")
+  .addEventListener("input", filterAndRenderProducts);
+
+document
+  .getElementById("productsSort")
+  .addEventListener("change", filterAndRenderProducts);
 
 document.addEventListener("DOMContentLoaded", initAdmin);
