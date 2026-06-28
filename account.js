@@ -1,5 +1,7 @@
 const customer = JSON.parse(localStorage.getItem("mesk_customer"));
 let addresses = [];
+let wishlist = [];
+let notifications = [];
 
 if (!customer) {
   window.location.href = "index.html";
@@ -19,6 +21,84 @@ if (customer.createdAt) {
     "عضو منذ " + formatDate(customer.createdAt);
 }
 
+async function loadNotifications() {
+  const response = await fetch(
+    `${WEB_APP_URL}?action=getNotifications&customerId=${customer.id}`,
+  );
+
+  notifications = await response.json();
+
+  renderNotifications();
+  await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "markNotificationsRead",
+
+      customerId: customer.id,
+    }),
+  });
+}
+
+function renderNotifications() {
+  const container = document.getElementById("notificationsContainer");
+
+  if (!notifications.length) {
+    container.innerHTML = `
+
+        <div class="empty-orders">
+
+            <i class="fa-solid fa-bell-slash"></i>
+
+            <h3>
+
+            لا توجد إشعارات
+
+            </h3>
+
+        </div>
+
+        `;
+
+    return;
+  }
+
+  container.innerHTML = "";
+
+  notifications.forEach((item) => {
+    container.innerHTML += `
+
+        <div class="notification-card ${item.isRead ? "" : "unread"}">
+
+            <div class="notification-title">
+
+                ${item.title}
+
+            </div>
+
+            <div class="notification-message">
+
+                ${item.message}
+
+            </div>
+
+            <div class="notification-date">
+
+                ${formatDate(item.createdAt)}
+
+            </div>
+
+        </div>
+
+        `;
+  });
+}
+
+
 async function loadOrders() {
   const response = await fetch(
     `${WEB_APP_URL}?action=getCustomerOrders&customerId=${customer.id}`,
@@ -32,6 +112,193 @@ async function loadOrders() {
 
   updateStats(orders);
 }
+
+function finalPrice(product) {
+  if (Number(product.discount) > 0) {
+    return Math.round(
+      Number(product.price) -
+        (Number(product.price) * Number(product.discount)) / 100,
+    );
+  }
+
+  return Number(product.price);
+}
+
+async function loadWishlist() {
+  const response = await fetch(
+    `${WEB_APP_URL}?action=getWishlist&customerId=${customer.id}`,
+  );
+
+  wishlist = await response.json();
+
+  console.log("wishlist =", wishlist);
+
+  renderWishlist();
+}
+
+function renderWishlist() {
+  const container = document.getElementById("wishlistContainer");
+
+  if (!wishlist.length) {
+    container.innerHTML = `
+
+        <div class="empty-orders">
+
+            <i class="fa-solid fa-heart-crack"></i>
+
+            <h3>
+
+                لا توجد منتجات مفضلة
+
+            </h3>
+
+        </div>
+
+        `;
+
+    return;
+  }
+
+  container.innerHTML = "";
+
+  wishlist.forEach((product) => {
+    container.innerHTML += `
+
+        <div class="wishlist-card ${Number(product.stock) <= 0 ? "out-stock" : ""}">
+            ${
+              Number(product.stock) <= 0
+                ? `
+
+                <div class="wishlist-out-stock">
+
+                    نفد المخزون
+
+                </div>
+
+              `
+                : ""
+            }
+
+            <a href="product.html?id=${product.id}">
+
+              <img
+                  src="${product.imageUrl}"
+                  class="wishlist-image">
+
+            </a>
+
+            <div class="wishlist-info">
+
+                <h3>
+
+                    ${product.name}
+
+                </h3>
+
+                <div class="wishlist-price">
+
+                  ${
+                    Number(product.discount) > 0
+                      ? `
+
+                      <span class="old-price">
+
+                          ${product.price} ج.م
+
+                      </span>
+
+                      <span class="new-price">
+
+                          ${finalPrice(product)} ج.م
+
+                      </span>
+
+                      `
+                      : `
+
+                      <span class="new-price">
+
+                          ${product.price} ج.م
+
+                      </span>
+
+                      `
+                  }
+
+                </div>
+
+            </div>
+
+            <div class="wishlist-actions">
+
+                ${
+                  Number(product.stock) > 0
+                    ? `
+
+                    <button
+                    class="wishlist-cart"
+                    onclick="wishlistAddToCart('${product.id}')">
+
+                    <i class="fa-solid fa-cart-plus"></i>
+
+                    أضف للسلة
+
+                    </button>
+
+                    `
+                    : `
+
+                    <button
+                    class="wishlist-cart disabled"
+                    disabled>
+
+                    <i class="fa-solid fa-ban"></i>
+
+                    غير متوفر
+
+                    </button>
+
+                  `
+                }
+
+                <button
+                    class="wishlist-remove"
+                    onclick="removeWishlist('${product.id}')">
+
+                    <i class="fa-solid fa-trash"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        `;
+  });
+}
+
+async function removeWishlist(id) {
+  await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "removeFavorite",
+
+      customerId: customer.id,
+
+      productId: id,
+    }),
+  });
+
+  wishlist = wishlist.filter((p) => String(p.id) !== String(id));
+
+  renderWishlist();
+}
+
 
 document.querySelector(".close-order-modal").onclick = () => {
   document.getElementById("orderModal").classList.remove("show");
@@ -892,7 +1159,7 @@ function updateStats(orders) {
 document.getElementById("ordersSearch").addEventListener("input", (e) => {
   const value = e.target.value.trim().toLowerCase();
 
-  const filtered = window.customerOrders.filter((order) =>
+  const filtered = (window.customerOrders || []).filter((order) =>
     order.id.toLowerCase().includes(value),
   );
 
@@ -1011,176 +1278,224 @@ addressModal.onclick = (e) => {
 
 document.getElementById("changePasswordBtn").onclick = changePassword;
 async function changePassword() {
-    const oldPassword = document.getElementById("oldPassword").value;
+  const oldPassword = document.getElementById("oldPassword").value;
 
-    const newPassword = document.getElementById("newAccountPassword").value;
+  const newPassword = document.getElementById("newAccountPassword").value;
 
-    const confirmPassword = document.getElementById(
-        "confirmAccountPassword",
-    ).value;
+  const confirmPassword = document.getElementById(
+    "confirmAccountPassword",
+  ).value;
 
-    if (!oldPassword || !newPassword) {
-        Swal.fire({
-        icon: "warning",
+  if (!oldPassword || !newPassword) {
+    Swal.fire({
+      icon: "warning",
 
-        title: "أكمل البيانات",
-        });
-
-        return;
-    }
-
-    if (newPassword != confirmPassword) {
-        Swal.fire({
-        icon: "error",
-
-        title: "كلمتا المرور غير متطابقتين",
-        });
-
-        return;
-    }
-
-    if (newPassword.length < 6) {
-        Swal.fire({
-        icon: "warning",
-
-        title: "كلمة المرور قصيرة يجب ان تكون على الاقل 6 حروف او ارقام",
-        });
-
-        return;
-    }
-
-    if (oldPassword === newPassword) {
-        Swal.fire({
-            icon: "warning",
-
-            title: "كلمة المرور الجديدة يجب أن تختلف عن الحالية",
-        });
-
-        return;
-    }
-
-    const response = await fetch(WEB_APP_URL, {
-        method: "POST",
-
-        headers: {
-        "Content-Type": "text/plain",
-        },
-
-        body: JSON.stringify({
-        action: "changePassword",
-
-        customerId: customer.id,
-
-        oldPassword,
-
-        newPassword,
-        }),
+      title: "أكمل البيانات",
     });
 
-    const result = await response.json();
+    return;
+  }
 
-    if (result.success) {
-        Swal.fire({
-        icon: "success",
+  if (newPassword != confirmPassword) {
+    Swal.fire({
+      icon: "error",
 
-        title: "تم تغيير كلمة المرور",
-        });
+      title: "كلمتا المرور غير متطابقتين",
+    });
 
-        document.getElementById("oldPassword").value = "";
+    return;
+  }
 
-        document.getElementById("newAccountPassword").value = "";
+  if (newPassword.length < 6) {
+    Swal.fire({
+      icon: "warning",
 
-        document.getElementById("confirmAccountPassword").value = "";
-    } else {
-        Swal.fire({
-        icon: "error",
+      title: "كلمة المرور قصيرة يجب ان تكون على الاقل 6 حروف او ارقام",
+    });
 
-        title: result.message,
-        });
-    }
+    return;
+  }
+
+  if (oldPassword === newPassword) {
+    Swal.fire({
+      icon: "warning",
+
+      title: "كلمة المرور الجديدة يجب أن تختلف عن الحالية",
+    });
+
+    return;
+  }
+
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: "changePassword",
+
+      customerId: customer.id,
+
+      oldPassword,
+
+      newPassword,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    Swal.fire({
+      icon: "success",
+
+      title: "تم تغيير كلمة المرور",
+    });
+
+    document.getElementById("oldPassword").value = "";
+
+    document.getElementById("newAccountPassword").value = "";
+
+    document.getElementById("confirmAccountPassword").value = "";
+  } else {
+    Swal.fire({
+      icon: "error",
+
+      title: result.message,
+    });
+  }
 }
 
 async function updateProfile() {
-    const name = document.getElementById("editCustomerName").value.trim();
+  const name = document.getElementById("editCustomerName").value.trim();
 
-    const phone = document.getElementById("editCustomerPhone").value.trim();
+  const phone = document.getElementById("editCustomerPhone").value.trim();
 
-    const email = document.getElementById("editCustomerEmail").value.trim();
+  const email = document.getElementById("editCustomerEmail").value.trim();
 
-    if (!name || !phone) {
-        Swal.fire({
-        icon: "warning",
+  const password = document.getElementById("profilePassword").value;
 
-        title: "أكمل البيانات",
-        });
+  if (!name || !phone) {
+    Swal.fire({
+      icon: "warning",
 
-        return;
-    }
-
-    const response = await fetch(WEB_APP_URL, {
-        method: "POST",
-
-        headers: {
-        "Content-Type": "text/plain",
-        },
-
-        body: JSON.stringify({
-        action: "updateCustomerProfile",
-
-        customerId: customer.id,
-
-        name,
-
-        phone,
-
-        email,
-
-        password,
-        }),
+      title: "أكمل البيانات",
     });
 
-    const password = document.getElementById("profilePassword").value;
+    return;
+  }
 
-    if (!password) {
-        Swal.fire({
-            icon: "warning",
-            title: "اكتب كلمة المرور الحالية",
-        });
+  if (!password) {
+    Swal.fire({
+      icon: "warning",
+      title: "اكتب كلمة المرور الحالية",
+    });
 
-        return;
-    }
+    return;
+  }
 
-    const result = await response.json();
+  const response = await fetch(WEB_APP_URL, {
+    method: "POST",
 
-    if (result.success) {
-        customer.name = name;
-        customer.phone = normalizePhone(phone);
-        customer.email = email;
+    headers: {
+      "Content-Type": "text/plain",
+    },
 
-        localStorage.setItem("mesk_customer", JSON.stringify(customer));
+    body: JSON.stringify({
+      action: "updateCustomerProfile",
 
-        document.getElementById("accountName").textContent = name;
-        document.getElementById("accountPhone").textContent = phone;
+      customerId: customer.id,
 
-        document.getElementById("profilePassword").value = "";
+      name,
 
-        localStorage.setItem("mesk_customer", JSON.stringify(customer));
+      phone,
 
-        Swal.fire({
-        icon: "success",
+      email,
 
-        title: "تم حفظ البيانات",
-        });
-    } else {
-        Swal.fire({
-        icon: "error",
+      password,
+    }),
+  });
 
-        title: result.message,
-        });
-    }
+  const result = await response.json();
+
+  if (result.success) {
+    customer.name = name;
+    customer.phone = normalizePhone(phone);
+    customer.email = email;
+
+    document.getElementById("accountName").textContent = name;
+    document.getElementById("accountPhone").textContent = phone;
+
+    document.getElementById("profilePassword").value = "";
+
+    localStorage.setItem("mesk_customer", JSON.stringify(customer));
+
+    Swal.fire({
+      icon: "success",
+
+      title: "تم حفظ البيانات",
+    });
+  } else {
+    Swal.fire({
+      icon: "error",
+
+      title: result.message,
+    });
+  }
 }
 document.getElementById("saveProfileBtn").onclick = updateProfile;
 
+let cart = JSON.parse(localStorage.getItem("mesk_cart")) || [];
+
+function saveCart() {
+    localStorage.setItem("mesk_cart", JSON.stringify(cart));
+}
+
+function wishlistAddToCart(id) {
+
+    const product = wishlist.find(p => String(p.id) === String(id));
+
+    if (!product) return;
+
+    const existing = cart.find(item => String(item.id) === String(id));
+
+    if (existing) {
+
+        existing.qty++;
+
+    } else {
+
+        cart.push({
+
+            id: Number(product.id),
+
+            name: product.name,
+
+            imageUrl: product.imageUrl,
+
+            price: finalPrice(product),
+
+            qty: 1
+
+        });
+
+    }
+
+    saveCart();
+
+    Swal.fire({
+
+        icon: "success",
+
+        title: "تمت إضافة المنتج للسلة"
+
+    });
+
+}
+
 loadOrders();
 loadAddresses();
+loadWishlist();
 loadCities();
+loadNotifications();

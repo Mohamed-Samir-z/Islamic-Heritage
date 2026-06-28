@@ -44,22 +44,40 @@ const searchBarContainer = document.getElementById("searchBarContainer");
 const searchInput = document.getElementById("searchInput");
 
 // تحديث السلة فور تشغيل الصفحة
-document.addEventListener("DOMContentLoaded", () => {
-  updateCartUI();
-  document.querySelectorAll(".favorite-btn").forEach((btn) => {
-    const id = btn.dataset.id;
+document.addEventListener("DOMContentLoaded", initApp);
 
-    if (favorites.includes(id)) {
-      btn.classList.add("active");
+let favorites = [];
 
-      btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-    }
+function getCustomer() {
+  return JSON.parse(localStorage.getItem("mesk_customer"));
+}
+
+async function loadFavorites() {
+  const customer = getCustomer();
+
+  if (!customer) {
+    favorites = [];
+    return;
+  }
+
+  const response = await fetch(
+    `${WEB_APP_URL}?action=getFavorites&customerId=${customer.id}`,
+  );
+
+  favorites = await response.json();
+
+  favorites = favorites.map((item) => String(item.productId));
+
+  console.log(favorites);
+}
+
+function bindStaticEvents() {
+  document.getElementById("heroShopNow").addEventListener("click", () => {
+    switchPage("products-page");
+
+    resetFilters();
   });
-  loadProducts();
-  loadBanner();
-});
-
-let favorites = JSON.parse(localStorage.getItem("mesk_favorites")) || [];
+}
 
 function normalizeArabic(text = "") {
   return text
@@ -102,7 +120,7 @@ async function loadProducts() {
     validateCartStock();
 
     renderProducts();
-    renderCategories();
+    await renderCategories();
   } catch (err) {
     console.error(err);
   }
@@ -194,9 +212,17 @@ function renderProducts() {
       }
 
       <button
-      class="favorite-btn"
-      data-id="${product.id}">
-      <i class="fa-regular fa-heart"></i>
+
+        class="favorite-btn
+
+        ${favorites.includes(String(product.id)) ? "active" : ""}"
+
+        data-id="${product.id}">
+
+        <i class="fa-${
+          favorites.includes(String(product.id)) ? "solid" : "regular"
+        } fa-heart"></i>
+
       </button>
 
       ${
@@ -258,28 +284,6 @@ document
       closeMenu(); // إغلاق المنيو إذا كنا في الموبايل
     });
   });
-
-// ربط زر "تسوق الآن" في البانر بنقل المستخدم لصفحة المنتجات
-document.getElementById("heroShopNow").addEventListener("click", () => {
-  switchPage("products-page");
-  resetFilters();
-});
-
-// ربط كروت الأقسام بصفحة المنتجات مع فلترة مسبقة
-document.querySelectorAll(".category-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    const category = card.getAttribute("data-category");
-    switchPage("products-page");
-    filterProducts(category);
-
-    // تحديث الزر النشط في الفلتر
-    document.querySelectorAll(".filter-btn").forEach((btn) => {
-      if (btn.getAttribute("data-filter") === category)
-        btn.classList.add("active");
-      else btn.classList.remove("active");
-    });
-  });
-});
 
 // 2. فتح وإغلاق المنيو الجانبي في الموبايل
 menuToggleBtn.addEventListener("click", () => {
@@ -405,12 +409,24 @@ function filterProducts(category) {
 }
 
 function resetFilters() {
-  document
-    .querySelectorAll(".filter-btn")
-    .forEach((b) => b.classList.remove("active"));
-  document
-    .querySelector('.filter-btn[data-filter="all"]')
-    .classList.add("active");
+  const buttons = document.querySelectorAll(".filter-btn");
+
+  if (!buttons.length) {
+    console.warn("Filters not loaded yet");
+
+    return;
+  }
+
+  buttons.forEach((btn) => {
+    btn.classList.remove("active");
+  });
+
+  const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+
+  if (allBtn) {
+    allBtn.classList.add("active");
+  }
+
   filterProducts("all");
 }
 
@@ -448,7 +464,7 @@ function addToCart(product) {
     cart.find((item) => item.id === product.id)?.qty || 0;
 
   if (currentQtyInCart >= fullProduct.stock) {
-    Swal.fire({
+    meskAlert.fire({
       icon: "warning",
       title: "وصلت للحد الأقصى من المخزون",
     });
@@ -475,33 +491,12 @@ function addToCart(product) {
   }
 
   saveAndRefreshCart();
-  Swal.fire({
-    toast: true,
-    position: "bottom-end",
-    icon: "success",
-    iconColor: "#1c3d27",
-    background: "#ffffff",
-    color: "#1c3d27",
-    confirmButtonColor: "#1c3d27",
-    cancelButtonColor: "#c5a880",
-    reverseButtons: true,
-    customClass: {
-      popup: "mesk-popup",
-      title: "mesk-title",
-      confirmButton: "mesk-confirm",
-      cancelButton: "mesk-cancel",
-    },
-    title: `ّتمت إضافة ${product.name} للسلة`,
-    showConfirmButton: false,
-    timer: 2500,
-    timerProgressBar: true,
-  });
 }
 
 function saveAndRefreshCart() {
   localStorage.setItem("mesk_cart", JSON.stringify(cart));
   updateCartUI();
-  showToast(product.name + " تمت اضافته للسلة");
+  showToast(" تمت اضافته للسلة");
 }
 
 function updateCartUI() {
@@ -755,33 +750,77 @@ function buildTasbihRing() {
   }
 }
 
+async function loadUnreadNotifications() {
+  const customer = getCustomer();
+
+  if (!customer) return;
+
+  const response = await fetch(
+    `${WEB_APP_URL}?action=getUnreadNotifications&customerId=${customer.id}`,
+  );
+
+  const result = await response.json();
+
+  const badge = document.getElementById("notificationBadge");
+
+  if (result.count > 0) {
+    badge.textContent = result.count;
+
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
 // تشغيل وتحديث الدالة فوراً وعند تغيير حجم الشاشة
-document.addEventListener("DOMContentLoaded", buildTasbihRing);
+
 window.addEventListener("resize", buildTasbihRing);
 buildTasbihRing();
 
-document.addEventListener("click", (e) => {
-  const favBtn = e.target.closest(".favorite-btn");
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".favorite-btn");
 
-  if (!favBtn) return;
+  if (!btn) return;
 
-  const id = favBtn.dataset.id;
+  if (!getCustomer()) {
+    loginModal.classList.add("show");
 
-  if (favorites.includes(id)) {
-    favorites = favorites.filter((item) => item !== id);
-
-    favBtn.classList.remove("active");
-
-    favBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-  } else {
-    favorites.push(id);
-
-    favBtn.classList.add("active");
-
-    favBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+    return;
   }
 
-  localStorage.setItem("mesk_favorites", JSON.stringify(favorites));
+  const productId = btn.dataset.id;
+
+  const isFav = favorites.includes(productId);
+
+  await fetch(WEB_APP_URL, {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "text/plain",
+    },
+
+    body: JSON.stringify({
+      action: isFav ? "removeFavorite" : "addFavorite",
+
+      customerId: getCustomer().id,
+
+      productId,
+    }),
+  });
+
+  if (isFav) {
+    favorites = favorites.filter((id) => id !== productId);
+
+    btn.classList.remove("active");
+
+    btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+  } else {
+    favorites.push(productId);
+
+    btn.classList.add("active");
+
+    btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+  }
 });
 
 if (!localStorage.getItem("mesk_products")) {
@@ -1080,7 +1119,10 @@ async function renderCategories() {
   }
 
   bindCategoryCards();
+
   bindFilterButtons();
+
+  return true;
 }
 
 function bindCategoryCards() {
@@ -1212,6 +1254,7 @@ async function loginCustomer() {
   );
 
   loginModal.classList.remove("show");
+  await loadUnreadNotifications();
 
   Swal.fire({
     icon: "success",
@@ -1231,8 +1274,6 @@ document.getElementById("goRegisterBtn").onclick = () => {
 document.querySelector(".close-register").onclick = () => {
   registerModal.classList.remove("show");
 };
-
-
 
 registerModal.onclick = (e) => {
   if (e.target === registerModal) {
@@ -1289,11 +1330,8 @@ async function registerCustomer() {
 
   const result = await response.json();
   console.log(result);
-  alert(JSON.stringify(result));
 
   if (result.needPassword) {
-    alert("فتح المودال");
-
     document.getElementById("createPasswordModal").classList.add("show");
 
     return;
@@ -1309,13 +1347,13 @@ async function registerCustomer() {
     return;
   }
 
-  
-
   localStorage.setItem(
     "mesk_customer",
 
     JSON.stringify(result.customer),
   );
+
+  await loadUnreadNotifications();
 
   Swal.fire({
     icon: "success",
@@ -1336,13 +1374,21 @@ const registerBtn = document.getElementById("registerBtn");
 registerBtn.onclick = registerCustomer;
 const savePasswordBtn = document.getElementById("savePasswordBtn");
 
-
 savePasswordBtn.onclick = async () => {
   if (newPassword.value != confirmPassword.value) {
     Swal.fire({
       icon: "error",
 
       text: "كلمتا المرور غير متطابقتين",
+    });
+
+    return;
+  }
+
+  if (newPassword.value.length < 6) {
+    Swal.fire({
+      icon: "warning",
+      text: "كلمة المرور يجب ألا تقل عن 6 أحرف",
     });
 
     return;
@@ -1364,15 +1410,6 @@ savePasswordBtn.onclick = async () => {
     }),
   });
 
-  if (newPassword.value.length < 6) {
-    Swal.fire({
-      icon: "warning",
-      text: "كلمة المرور يجب ألا تقل عن 6 أحرف",
-    });
-
-    return;
-  }
-
   const result = await response.json();
 
   if (result.success) {
@@ -1386,3 +1423,21 @@ savePasswordBtn.onclick = async () => {
     location.href = "account.html";
   }
 };
+
+async function initApp() {
+  try {
+    updateCartUI();
+
+    await loadFavorites();
+
+    await loadProducts();
+
+    await loadBanner();
+
+    await loadUnreadNotifications();
+
+    bindStaticEvents();
+  } catch (err) {
+    console.error(err);
+  }
+}
