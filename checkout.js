@@ -78,36 +78,36 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const cities = [
-    "Ø§ÙÙØ§ÙØ±Ø©",
-    "Ø§ÙØ¬ÙØ²Ø©",
-    "Ø§ÙØ¥Ø³ÙÙØ¯Ø±ÙØ©",
-    "Ø§ÙÙÙÙÙØ¨ÙØ©",
-    "Ø§ÙØ´Ø±ÙÙØ©",
-    "Ø§ÙØºØ±Ø¨ÙØ©",
-    "Ø§ÙÙÙÙÙÙØ©",
-    "Ø§ÙØ¨Ø­ÙØ±Ø©",
-    "ÙÙØ± Ø§ÙØ´ÙØ®",
-    "Ø§ÙØ¯ÙÙÙÙØ©",
-    "Ø¯ÙÙØ§Ø·",
-    "Ø¨ÙØ±Ø³Ø¹ÙØ¯",
-    "Ø§ÙØ¥Ø³ÙØ§Ø¹ÙÙÙØ©",
-    "Ø§ÙØ³ÙÙØ³",
-    "Ø´ÙØ§Ù Ø³ÙÙØ§Ø¡",
-    "Ø¬ÙÙØ¨ Ø³ÙÙØ§Ø¡",
-    "Ø§ÙÙÙÙÙ",
-    "Ø¨ÙÙ Ø³ÙÙÙ",
-    "Ø§ÙÙÙÙØ§",
-    "Ø£Ø³ÙÙØ·",
-    "Ø³ÙÙØ§Ø¬",
-    "ÙÙØ§",
-    "Ø§ÙØ£ÙØµØ±",
-    "Ø£Ø³ÙØ§Ù",
-    "Ø§ÙØ¨Ø­Ø± Ø§ÙØ£Ø­ÙØ±",
-    "ÙØ·Ø±ÙØ­",
-    "Ø§ÙÙØ§Ø¯Ù Ø§ÙØ¬Ø¯ÙØ¯",
+    "القاهرة",
+    "الجيزة",
+    "الإسكندرية",
+    "القليوبية",
+    "الشرقية",
+    "الغربية",
+    "المنوفية",
+    "البحيرة",
+    "كفر الشيخ",
+    "الدقهلية",
+    "دمياط",
+    "بورسعيد",
+    "الإسماعيلية",
+    "السويس",
+    "شمال سيناء",
+    "جنوب سيناء",
+    "الفيوم",
+    "بنى سويف",
+    "المنيا",
+    "أسيوط",
+    "سوهاج",
+    "قنا",
+    "الأقصر",
+    "أسوان",
+    "البحر الأحمر",
+    "مطروح",
+    "الوادى الجديد",
 ];
 
-  citySelect.innerHTML = `<option value="">Ø§Ø®ØªØ± Ø§ÙÙØ­Ø§ÙØ¸Ø©</option>`;
+  citySelect.innerHTML = `<option value="">اختر المحافظة</option>`;
   cities.forEach((city) => {
     const option = document.createElement("option");
     option.value = city;
@@ -195,7 +195,7 @@ async function loadAddressesList(customerId){
 
     `<option value="">
 
-    Ø§Ø®ØªØ± Ø¹ÙÙØ§Ù
+    اختر عنوان
 
     </option>`;
 
@@ -270,16 +270,16 @@ function renderCheckout() {
             <img src="${item.imageUrl || ""}" alt="${item.name || ""}">
             <div class="checkout-item-info">
             <h4>${item.name || ""}</h4>
-            <p>${qty} Ã ${price} Ø¬.Ù</p>
+            <p>${qty} × ${price} ج.م</p>
             </div>
         </div>
         `;
     });
 
-    subtotalPrice.textContent = subtotal + " Ø¬.Ù";
-    discountPrice.textContent = "0 Ø¬.Ù";
-    shippingPrice.textContent = "0 Ø¬.Ù";
-    totalPrice.textContent = subtotal + " Ø¬.Ù";
+    subtotalPrice.textContent = subtotal + " ج.م";
+    discountPrice.textContent = "0 ج.م";
+    shippingPrice.textContent = "0 ج.م";
+    totalPrice.textContent = subtotal + " ج.م";
 }
 
     renderCheckout();
@@ -301,7 +301,7 @@ function fillAddress(address) {
 }
 
 async function submitOrder() {
-    alert("Ø¯Ø®ÙØª Ø§ÙØ¯Ø§ÙØ©");
+    alert("دخلت الدالة");
 
     console.log("Submit Order");
     const customerName = document.getElementById("customerName").value.trim();
@@ -332,7 +332,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "Ø§ÙØªØ¨ Ø§ÙØ§Ø³Ù",
+        title: "اكتب الاسم",
         });
     }
 
@@ -340,7 +340,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "Ø§ÙØªØ¨ Ø±ÙÙ Ø§ÙÙØ§ØªÙ",
+        title: "اكتب رقم الهاتف",
         });
     }
 
@@ -348,7 +348,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "Ø§Ø®ØªØ± Ø§ÙÙØ­Ø§ÙØ¸Ø©",
+        title: "اختر المحافظة",
         });
     }
 
@@ -356,7 +356,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "Ø§ÙØªØ¨ Ø§ÙØ¹ÙÙØ§Ù",
+        title: "اكتب العنوان",
         });
     }
 
@@ -364,7 +364,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "Ø§ÙØ³ÙØ© ÙØ§Ø±ØºØ©",
+        title: "السلة فارغة",
         });
     }
     let subTotal = 0;
@@ -436,9 +436,9 @@ async function submitOrder() {
     Swal.fire({
         icon: "success",
 
-        title: "ØªÙ Ø§Ø³ØªÙØ§Ù Ø·ÙØ¨Ù",
+        title: "تم استلام طلبك",
 
-        text: "Ø±ÙÙ Ø§ÙØ·ÙØ¨ : " + result.orderId,
+        text: "رقم الطلب : " + result.orderId,
     });
 
     await fetch(WEB_APP_URL, {
@@ -455,7 +455,7 @@ async function submitOrder() {
 
             customerId: customer.id,
 
-            title: "Ø§ÙÙÙØ²Ù",
+            title: "المنزل",
 
             receiverName: customerName,
 
