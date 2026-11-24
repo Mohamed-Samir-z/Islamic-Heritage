@@ -1,3 +1,37 @@
+
+// ===== Customer session layer v71 =====
+(function () {
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function (url, opts) {
+    try {
+      if (typeof WEB_APP_URL !== "undefined" && typeof url === "string" && url.startsWith(WEB_APP_URL)) {
+        const tok = localStorage.getItem("mesk_token") || "";
+        if (tok) {
+          if (opts && opts.body) {
+            const b = JSON.parse(opts.body);
+            b.token = tok;
+            opts = Object.assign({}, opts, { body: JSON.stringify(b) });
+          } else {
+            url += (url.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(tok);
+          }
+        }
+      }
+    } catch (e) {}
+    return _origFetch(url, opts).then((r) => {
+      try {
+        return r.clone().json().then((j) => {
+          if (j && j.error === "unauthorized" && typeof WEB_APP_URL !== "undefined" && typeof url === "string" && url.startsWith(WEB_APP_URL)) {
+            localStorage.removeItem("mesk_customer");
+            localStorage.removeItem("mesk_token");
+            
+          }
+          return r;
+        }).catch(() => r);
+      } catch (e) { return r; }
+    });
+  };
+})();
+// ===== end customer session layer =====
 let checkoutCart = [];
 document.addEventListener("DOMContentLoaded", () => {
    checkoutCart = JSON.parse(localStorage.getItem("mesk_cart")) || [];
@@ -44,36 +78,36 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const cities = [
-    "القاهرة",
-    "الجيزة",
-    "الإسكندرية",
-    "القليوبية",
-    "الشرقية",
-    "الغربية",
-    "المنوفية",
-    "البحيرة",
-    "كفر الشيخ",
-    "الدقهلية",
-    "دمياط",
-    "بورسعيد",
-    "الإسماعيلية",
-    "السويس",
-    "شمال سيناء",
-    "جنوب سيناء",
-    "الفيوم",
-    "بنى سويف",
-    "المنيا",
-    "أسيوط",
-    "سوهاج",
-    "قنا",
-    "الأقصر",
-    "أسوان",
-    "البحر الأحمر",
-    "مطروح",
-    "الوادى الجديد",
+    "Ø§ÙÙØ§ÙØ±Ø©",
+    "Ø§ÙØ¬ÙØ²Ø©",
+    "Ø§ÙØ¥Ø³ÙÙØ¯Ø±ÙØ©",
+    "Ø§ÙÙÙÙÙØ¨ÙØ©",
+    "Ø§ÙØ´Ø±ÙÙØ©",
+    "Ø§ÙØºØ±Ø¨ÙØ©",
+    "Ø§ÙÙÙÙÙÙØ©",
+    "Ø§ÙØ¨Ø­ÙØ±Ø©",
+    "ÙÙØ± Ø§ÙØ´ÙØ®",
+    "Ø§ÙØ¯ÙÙÙÙØ©",
+    "Ø¯ÙÙØ§Ø·",
+    "Ø¨ÙØ±Ø³Ø¹ÙØ¯",
+    "Ø§ÙØ¥Ø³ÙØ§Ø¹ÙÙÙØ©",
+    "Ø§ÙØ³ÙÙØ³",
+    "Ø´ÙØ§Ù Ø³ÙÙØ§Ø¡",
+    "Ø¬ÙÙØ¨ Ø³ÙÙØ§Ø¡",
+    "Ø§ÙÙÙÙÙ",
+    "Ø¨ÙÙ Ø³ÙÙÙ",
+    "Ø§ÙÙÙÙØ§",
+    "Ø£Ø³ÙÙØ·",
+    "Ø³ÙÙØ§Ø¬",
+    "ÙÙØ§",
+    "Ø§ÙØ£ÙØµØ±",
+    "Ø£Ø³ÙØ§Ù",
+    "Ø§ÙØ¨Ø­Ø± Ø§ÙØ£Ø­ÙØ±",
+    "ÙØ·Ø±ÙØ­",
+    "Ø§ÙÙØ§Ø¯Ù Ø§ÙØ¬Ø¯ÙØ¯",
 ];
 
-  citySelect.innerHTML = `<option value="">اختر المحافظة</option>`;
+  citySelect.innerHTML = `<option value="">Ø§Ø®ØªØ± Ø§ÙÙØ­Ø§ÙØ¸Ø©</option>`;
   cities.forEach((city) => {
     const option = document.createElement("option");
     option.value = city;
@@ -161,7 +195,7 @@ async function loadAddressesList(customerId){
 
     `<option value="">
 
-    اختر عنوان
+    Ø§Ø®ØªØ± Ø¹ÙÙØ§Ù
 
     </option>`;
 
@@ -236,16 +270,16 @@ function renderCheckout() {
             <img src="${item.imageUrl || ""}" alt="${item.name || ""}">
             <div class="checkout-item-info">
             <h4>${item.name || ""}</h4>
-            <p>${qty} × ${price} ج.م</p>
+            <p>${qty} Ã ${price} Ø¬.Ù</p>
             </div>
         </div>
         `;
     });
 
-    subtotalPrice.textContent = subtotal + " ج.م";
-    discountPrice.textContent = "0 ج.م";
-    shippingPrice.textContent = "0 ج.م";
-    totalPrice.textContent = subtotal + " ج.م";
+    subtotalPrice.textContent = subtotal + " Ø¬.Ù";
+    discountPrice.textContent = "0 Ø¬.Ù";
+    shippingPrice.textContent = "0 Ø¬.Ù";
+    totalPrice.textContent = subtotal + " Ø¬.Ù";
 }
 
     renderCheckout();
@@ -267,7 +301,7 @@ function fillAddress(address) {
 }
 
 async function submitOrder() {
-    alert("دخلت الدالة");
+    alert("Ø¯Ø®ÙØª Ø§ÙØ¯Ø§ÙØ©");
 
     console.log("Submit Order");
     const customerName = document.getElementById("customerName").value.trim();
@@ -298,7 +332,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "اكتب الاسم",
+        title: "Ø§ÙØªØ¨ Ø§ÙØ§Ø³Ù",
         });
     }
 
@@ -306,7 +340,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "اكتب رقم الهاتف",
+        title: "Ø§ÙØªØ¨ Ø±ÙÙ Ø§ÙÙØ§ØªÙ",
         });
     }
 
@@ -314,7 +348,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "اختر المحافظة",
+        title: "Ø§Ø®ØªØ± Ø§ÙÙØ­Ø§ÙØ¸Ø©",
         });
     }
 
@@ -322,7 +356,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "اكتب العنوان",
+        title: "Ø§ÙØªØ¨ Ø§ÙØ¹ÙÙØ§Ù",
         });
     }
 
@@ -330,7 +364,7 @@ async function submitOrder() {
         return Swal.fire({
         icon: "warning",
 
-        title: "السلة فارغة",
+        title: "Ø§ÙØ³ÙØ© ÙØ§Ø±ØºØ©",
         });
     }
     let subTotal = 0;
@@ -402,9 +436,9 @@ async function submitOrder() {
     Swal.fire({
         icon: "success",
 
-        title: "تم استلام طلبك",
+        title: "ØªÙ Ø§Ø³ØªÙØ§Ù Ø·ÙØ¨Ù",
 
-        text: "رقم الطلب : " + result.orderId,
+        text: "Ø±ÙÙ Ø§ÙØ·ÙØ¨ : " + result.orderId,
     });
 
     await fetch(WEB_APP_URL, {
@@ -421,7 +455,7 @@ async function submitOrder() {
 
             customerId: customer.id,
 
-            title: "المنزل",
+            title: "Ø§ÙÙÙØ²Ù",
 
             receiverName: customerName,
 
