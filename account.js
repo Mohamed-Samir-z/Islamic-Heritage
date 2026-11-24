@@ -1,3 +1,37 @@
+
+// ===== Customer session layer v71 =====
+(function () {
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function (url, opts) {
+    try {
+      if (typeof WEB_APP_URL !== "undefined" && typeof url === "string" && url.startsWith(WEB_APP_URL)) {
+        const tok = localStorage.getItem("mesk_token") || "";
+        if (tok) {
+          if (opts && opts.body) {
+            const b = JSON.parse(opts.body);
+            b.token = tok;
+            opts = Object.assign({}, opts, { body: JSON.stringify(b) });
+          } else {
+            url += (url.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(tok);
+          }
+        }
+      }
+    } catch (e) {}
+    return _origFetch(url, opts).then((r) => {
+      try {
+        return r.clone().json().then((j) => {
+          if (j && j.error === "unauthorized" && typeof WEB_APP_URL !== "undefined" && typeof url === "string" && url.startsWith(WEB_APP_URL)) {
+            localStorage.removeItem("mesk_customer");
+            localStorage.removeItem("mesk_token");
+            window.location.href = "index.html";
+          }
+          return r;
+        }).catch(() => r);
+      } catch (e) { return r; }
+    });
+  };
+})();
+// ===== end customer session layer =====
 const customer = JSON.parse(localStorage.getItem("mesk_customer"));
 let addresses = [];
 let wishlist = [];
@@ -18,7 +52,7 @@ document.getElementById("editCustomerEmail").value = customer.email || "";
 
 if (customer.createdAt) {
   document.getElementById("memberSince").textContent =
-    "عضو منذ " + formatDate(customer.createdAt);
+    "Ø¹Ø¶Ù ÙÙØ° " + formatDate(customer.createdAt);
 }
 
 async function loadNotifications() {
@@ -56,7 +90,7 @@ function renderNotifications() {
 
             <h3>
 
-            لا توجد إشعارات
+            ÙØ§ ØªÙØ¬Ø¯ Ø¥Ø´Ø¹Ø§Ø±Ø§Øª
 
             </h3>
 
@@ -148,7 +182,7 @@ function renderWishlist() {
 
             <h3>
 
-                لا توجد منتجات مفضلة
+                ÙØ§ ØªÙØ¬Ø¯ ÙÙØªØ¬Ø§Øª ÙÙØ¶ÙØ©
 
             </h3>
 
@@ -171,7 +205,7 @@ function renderWishlist() {
 
                 <div class="wishlist-out-stock">
 
-                    نفد المخزون
+                    ÙÙØ¯ Ø§ÙÙØ®Ø²ÙÙ
 
                 </div>
 
@@ -203,13 +237,13 @@ function renderWishlist() {
 
                       <span class="old-price">
 
-                          ${product.price} ج.م
+                          ${product.price} Ø¬.Ù
 
                       </span>
 
                       <span class="new-price">
 
-                          ${finalPrice(product)} ج.م
+                          ${finalPrice(product)} Ø¬.Ù
 
                       </span>
 
@@ -218,7 +252,7 @@ function renderWishlist() {
 
                       <span class="new-price">
 
-                          ${product.price} ج.م
+                          ${product.price} Ø¬.Ù
 
                       </span>
 
@@ -241,7 +275,7 @@ function renderWishlist() {
 
                     <i class="fa-solid fa-cart-plus"></i>
 
-                    أضف للسلة
+                    Ø£Ø¶Ù ÙÙØ³ÙØ©
 
                     </button>
 
@@ -254,7 +288,7 @@ function renderWishlist() {
 
                     <i class="fa-solid fa-ban"></i>
 
-                    غير متوفر
+                    ØºÙØ± ÙØªÙÙØ±
 
                     </button>
 
@@ -321,9 +355,9 @@ function renderOrders(orders) {
 
             <i class="fa-solid fa-box-open"></i>
 
-            <h3>لا توجد طلبات حتى الآن</h3>
+            <h3>ÙØ§ ØªÙØ¬Ø¯ Ø·ÙØ¨Ø§Øª Ø­ØªÙ Ø§ÙØ¢Ù</h3>
 
-            <p>ابدأ التسوق وسيظهر سجل طلباتك هنا.</p>
+            <p>Ø§Ø¨Ø¯Ø£ Ø§ÙØªØ³ÙÙ ÙØ³ÙØ¸ÙØ± Ø³Ø¬Ù Ø·ÙØ¨Ø§ØªÙ ÙÙØ§.</p>
 
         </div>
         `;
@@ -380,13 +414,13 @@ function renderOrders(orders) {
 
                     <h3>
 
-                        ${itemsCount} منتج
+                        ${itemsCount} ÙÙØªØ¬
 
                     </h3>
 
                     <p>
 
-                        إجمالى الطلب
+                        Ø¥Ø¬ÙØ§ÙÙ Ø§ÙØ·ÙØ¨
 
                     </p>
 
@@ -396,7 +430,7 @@ function renderOrders(orders) {
 
                     ${order.total}
 
-                    <small>ج.م</small>
+                    <small>Ø¬.Ù</small>
 
                 </div>
 
@@ -406,7 +440,7 @@ function renderOrders(orders) {
 
                 <span>
 
-                    عرض التفاصيل
+                    Ø¹Ø±Ø¶ Ø§ÙØªÙØ§ØµÙÙ
 
                 </span>
 
@@ -422,36 +456,36 @@ function renderOrders(orders) {
 
 function loadCities(selected = "") {
   const cities = [
-    "القاهرة",
-    "الجيزة",
-    "الإسكندرية",
-    "القليوبية",
-    "الشرقية",
-    "الغربية",
-    "المنوفية",
-    "البحيرة",
-    "كفر الشيخ",
-    "الدقهلية",
-    "دمياط",
-    "بورسعيد",
-    "الإسماعيلية",
-    "السويس",
-    "شمال سيناء",
-    "جنوب سيناء",
-    "الفيوم",
-    "بنى سويف",
-    "المنيا",
-    "أسيوط",
-    "سوهاج",
-    "قنا",
-    "الأقصر",
-    "أسوان",
-    "البحر الأحمر",
-    "مطروح",
-    "الوادى الجديد",
+    "Ø§ÙÙØ§ÙØ±Ø©",
+    "Ø§ÙØ¬ÙØ²Ø©",
+    "Ø§ÙØ¥Ø³ÙÙØ¯Ø±ÙØ©",
+    "Ø§ÙÙÙÙÙØ¨ÙØ©",
+    "Ø§ÙØ´Ø±ÙÙØ©",
+    "Ø§ÙØºØ±Ø¨ÙØ©",
+    "Ø§ÙÙÙÙÙÙØ©",
+    "Ø§ÙØ¨Ø­ÙØ±Ø©",
+    "ÙÙØ± Ø§ÙØ´ÙØ®",
+    "Ø§ÙØ¯ÙÙÙÙØ©",
+    "Ø¯ÙÙØ§Ø·",
+    "Ø¨ÙØ±Ø³Ø¹ÙØ¯",
+    "Ø§ÙØ¥Ø³ÙØ§Ø¹ÙÙÙØ©",
+    "Ø§ÙØ³ÙÙØ³",
+    "Ø´ÙØ§Ù Ø³ÙÙØ§Ø¡",
+    "Ø¬ÙÙØ¨ Ø³ÙÙØ§Ø¡",
+    "Ø§ÙÙÙÙÙ",
+    "Ø¨ÙÙ Ø³ÙÙÙ",
+    "Ø§ÙÙÙÙØ§",
+    "Ø£Ø³ÙÙØ·",
+    "Ø³ÙÙØ§Ø¬",
+    "ÙÙØ§",
+    "Ø§ÙØ£ÙØµØ±",
+    "Ø£Ø³ÙØ§Ù",
+    "Ø§ÙØ¨Ø­Ø± Ø§ÙØ£Ø­ÙØ±",
+    "ÙØ·Ø±ÙØ­",
+    "Ø§ÙÙØ§Ø¯Ù Ø§ÙØ¬Ø¯ÙØ¯",
   ];
 
-  addressCity.innerHTML = `<option value="">اختر المحافظة</option>`;
+  addressCity.innerHTML = `<option value="">Ø§Ø®ØªØ± Ø§ÙÙØ­Ø§ÙØ¸Ø©</option>`;
 
   cities.forEach((city) => {
     addressCity.innerHTML += `
@@ -490,7 +524,7 @@ function renderAddresses() {
 
             <h3>
 
-                لا توجد عناوين
+                ÙØ§ ØªÙØ¬Ø¯ Ø¹ÙØ§ÙÙÙ
 
             </h3>
 
@@ -514,7 +548,7 @@ function renderAddresses() {
 
             <div class="address-title">
 
-            🏠 ${address.title}
+            ð  ${address.title}
 
             </div>
 
@@ -530,7 +564,7 @@ function renderAddresses() {
               address.isDefault
                 ? `<span class="default-badge">
 
-            افتراضى
+            Ø§ÙØªØ±Ø§Ø¶Ù
 
             </span>`
                 : ""
@@ -582,7 +616,7 @@ function renderAddresses() {
 
             <i class="fa-solid fa-pen"></i>
 
-            تعديل
+            ØªØ¹Ø¯ÙÙ
 
             </button>
 
@@ -592,7 +626,7 @@ function renderAddresses() {
 
             <i class="fa-solid fa-trash"></i>
 
-            حذف
+            Ø­Ø°Ù
 
             </button>
 
@@ -606,7 +640,7 @@ function renderAddresses() {
 
             <i class="fa-solid fa-star"></i>
 
-            افتراضى
+            Ø§ÙØªØ±Ø§Ø¶Ù
 
             </button>
 
@@ -626,13 +660,13 @@ async function deleteAddress(id) {
   const result = await Swal.fire({
     icon: "warning",
 
-    title: "حذف العنوان؟",
+    title: "Ø­Ø°Ù Ø§ÙØ¹ÙÙØ§ÙØ",
 
-    text: "لن تستطيع استرجاعه",
+    text: "ÙÙ ØªØ³ØªØ·ÙØ¹ Ø§Ø³ØªØ±Ø¬Ø§Ø¹Ù",
 
     showCancelButton: true,
 
-    confirmButtonText: "حذف",
+    confirmButtonText: "Ø­Ø°Ù",
   });
 
   if (!result.isConfirmed) return;
@@ -693,9 +727,9 @@ function editAddress(id) {
 
   addressId.value = address.id;
 
-  addressModalTitle.textContent = "تعديل عنوان";
+  addressModalTitle.textContent = "ØªØ¹Ø¯ÙÙ Ø¹ÙÙØ§Ù";
 
-  saveAddressBtn.textContent = "حفظ التعديلات";
+  saveAddressBtn.textContent = "Ø­ÙØ¸ Ø§ÙØªØ¹Ø¯ÙÙØ§Øª";
 
   addressTitle.value = address.title;
 
@@ -718,35 +752,35 @@ function getStatus(status) {
   switch (status) {
     case "NEW":
       return {
-        text: "جديد",
+        text: "Ø¬Ø¯ÙØ¯",
 
         className: "orange",
       };
 
     case "PROCESSING":
       return {
-        text: "جارى التجهيز",
+        text: "Ø¬Ø§Ø±Ù Ø§ÙØªØ¬ÙÙØ²",
 
         className: "blue",
       };
 
     case "SHIPPED":
       return {
-        text: "تم الشحن",
+        text: "ØªÙ Ø§ÙØ´Ø­Ù",
 
         className: "purple",
       };
 
     case "DELIVERED":
       return {
-        text: "تم التسليم",
+        text: "ØªÙ Ø§ÙØªØ³ÙÙÙ",
 
         className: "green",
       };
 
     case "CANCELLED":
       return {
-        text: "ملغى",
+        text: "ÙÙØºÙ",
 
         className: "red",
       };
@@ -782,15 +816,15 @@ function openOrder(orderId) {
 
             <span>
 
-                الكمية :
+                Ø§ÙÙÙÙØ© :
                 ${item.qty}
 
             </span>
 
             <span>
 
-                السعر :
-                ${item.price} ج.م
+                Ø§ÙØ³Ø¹Ø± :
+                ${item.price} Ø¬.Ù
 
             </span>
 
@@ -833,7 +867,7 @@ function openOrder(orderId) {
 
             <i class="fa-solid fa-box"></i>
 
-            المنتجات
+            Ø§ÙÙÙØªØ¬Ø§Øª
 
         </div>
 
@@ -841,7 +875,7 @@ function openOrder(orderId) {
 
             <i class="fa-solid fa-truck-fast"></i>
 
-            تتبع الطلب
+            ØªØªØ¨Ø¹ Ø§ÙØ·ÙØ¨
 
             </div>
 
@@ -861,7 +895,7 @@ function openOrder(orderId) {
 
             <i class="fa-solid fa-user"></i>
 
-            بيانات العميل
+            Ø¨ÙØ§ÙØ§Øª Ø§ÙØ¹ÙÙÙ
 
             </div>
 
@@ -906,7 +940,7 @@ function openOrder(orderId) {
 
             <i class="fa-solid fa-map-pin"></i>
 
-            ${responseOrder.landmark || "لا يوجد"}
+            ${responseOrder.landmark || "ÙØ§ ÙÙØ¬Ø¯"}
 
             </div>
 
@@ -917,7 +951,7 @@ function openOrder(orderId) {
 
             <i class="fa-solid fa-store"></i>
 
-            استلام من المتجر
+            Ø§Ø³ØªÙØ§Ù ÙÙ Ø§ÙÙØªØ¬Ø±
 
             </div>
 
@@ -930,7 +964,7 @@ function openOrder(orderId) {
 
         <i class="fa-solid fa-wallet"></i>
 
-        ملخص الطلب
+        ÙÙØ®Øµ Ø§ÙØ·ÙØ¨
 
         </div>
 
@@ -938,13 +972,13 @@ function openOrder(orderId) {
 
         <div>
 
-        <span>الإجمالى</span>
+        <span>Ø§ÙØ¥Ø¬ÙØ§ÙÙ</span>
 
         <strong>
 
         ${responseOrder.subTotal}
 
-        ج.م
+        Ø¬.Ù
 
         </strong>
 
@@ -952,13 +986,13 @@ function openOrder(orderId) {
 
         <div>
 
-        <span>الخصم</span>
+        <span>Ø§ÙØ®ØµÙ</span>
 
         <strong>
 
         ${responseOrder.discount}
 
-        ج.م
+        Ø¬.Ù
 
         </strong>
 
@@ -966,13 +1000,13 @@ function openOrder(orderId) {
 
         <div>
 
-        <span>الشحن</span>
+        <span>Ø§ÙØ´Ø­Ù</span>
 
         <strong>
 
         ${responseOrder.shipping}
 
-        ج.م
+        Ø¬.Ù
 
         </strong>
 
@@ -981,13 +1015,13 @@ function openOrder(orderId) {
 
             <span>
 
-            طريقة الاستلام
+            Ø·Ø±ÙÙØ© Ø§ÙØ§Ø³ØªÙØ§Ù
 
             </span>
 
             <strong>
 
-            ${responseOrder.shippingType === "pickup" ? "استلام من المتجر" : "توصيل"}
+            ${responseOrder.shippingType === "pickup" ? "Ø§Ø³ØªÙØ§Ù ÙÙ Ø§ÙÙØªØ¬Ø±" : "ØªÙØµÙÙ"}
 
             </strong>
 
@@ -1001,7 +1035,7 @@ function openOrder(orderId) {
 
                 <span>
 
-                شركة الشحن
+                Ø´Ø±ÙØ© Ø§ÙØ´Ø­Ù
 
                 </span>
 
@@ -1025,7 +1059,7 @@ function openOrder(orderId) {
 
                     <span>
 
-                    رقم التتبع
+                    Ø±ÙÙ Ø§ÙØªØªØ¨Ø¹
 
                     </span>
 
@@ -1061,7 +1095,7 @@ function openOrder(orderId) {
 
         <span>
 
-        الإجمالى النهائى
+        Ø§ÙØ¥Ø¬ÙØ§ÙÙ Ø§ÙÙÙØ§Ø¦Ù
 
         </span>
 
@@ -1069,7 +1103,7 @@ function openOrder(orderId) {
 
         ${responseOrder.total}
 
-        ج.م
+        Ø¬.Ù
 
         </strong>
 
@@ -1086,29 +1120,29 @@ function getTimeline(status, shippingType) {
 
   if (shippingType === "pickup") {
     steps = [
-      { key: "NEW", text: "تم استلام الطلب" },
+      { key: "NEW", text: "ØªÙ Ø§Ø³ØªÙØ§Ù Ø§ÙØ·ÙØ¨" },
 
-      { key: "PROCESSING", text: "جارى التجهيز" },
+      { key: "PROCESSING", text: "Ø¬Ø§Ø±Ù Ø§ÙØªØ¬ÙÙØ²" },
 
-      { key: "READY", text: "جاهز للاستلام" },
+      { key: "READY", text: "Ø¬Ø§ÙØ² ÙÙØ§Ø³ØªÙØ§Ù" },
 
-      { key: "DELIVERED", text: "تم الاستلام" },
+      { key: "DELIVERED", text: "ØªÙ Ø§ÙØ§Ø³ØªÙØ§Ù" },
     ];
   } else {
     steps = [
-      { key: "NEW", text: "تم استلام الطلب" },
+      { key: "NEW", text: "ØªÙ Ø§Ø³ØªÙØ§Ù Ø§ÙØ·ÙØ¨" },
 
-      { key: "REVIEW", text: "تمت المراجعة" },
+      { key: "REVIEW", text: "ØªÙØª Ø§ÙÙØ±Ø§Ø¬Ø¹Ø©" },
 
-      { key: "PROCESSING", text: "جارى التجهيز" },
+      { key: "PROCESSING", text: "Ø¬Ø§Ø±Ù Ø§ÙØªØ¬ÙÙØ²" },
 
-      { key: "PACKED", text: "تم التغليف" },
+      { key: "PACKED", text: "ØªÙ Ø§ÙØªØºÙÙÙ" },
 
-      { key: "SHIPPED", text: "خرج للشحن" },
+      { key: "SHIPPED", text: "Ø®Ø±Ø¬ ÙÙØ´Ø­Ù" },
 
-      { key: "ONWAY", text: "فى الطريق" },
+      { key: "ONWAY", text: "ÙÙ Ø§ÙØ·Ø±ÙÙ" },
 
-      { key: "DELIVERED", text: "تم التسليم" },
+      { key: "DELIVERED", text: "ØªÙ Ø§ÙØªØ³ÙÙÙ" },
     ];
   }
 
@@ -1153,7 +1187,7 @@ function updateStats(orders) {
   ).length;
 
   totalSpent.textContent =
-    orders.reduce((s, o) => s + Number(o.total), 0) + " ج.م";
+    orders.reduce((s, o) => s + Number(o.total), 0) + " Ø¬.Ù";
 }
 
 document.getElementById("ordersSearch").addEventListener("input", (e) => {
@@ -1197,7 +1231,7 @@ document.getElementById("saveAddressBtn").onclick = async () => {
     }),
   });
 
-  // تنظيف الفورم
+  // ØªÙØ¸ÙÙ Ø§ÙÙÙØ±Ù
   addressId.value = "";
 
   addressTitle.value = "";
@@ -1214,10 +1248,10 @@ document.getElementById("saveAddressBtn").onclick = async () => {
 
   defaultAddress.checked = false;
 
-  // غلق المودال
+  // ØºÙÙ Ø§ÙÙÙØ¯Ø§Ù
   document.getElementById("addressModal").classList.remove("show");
 
-  // تحديث القائمة
+  // ØªØ­Ø¯ÙØ« Ø§ÙÙØ§Ø¦ÙØ©
   loadAddresses();
 };
 
@@ -1252,6 +1286,7 @@ tabs.forEach((tab) => {
 
 logoutBtn.onclick = () => {
   localStorage.removeItem("mesk_customer");
+  localStorage.removeItem("mesk_token");
 
   location.href = "index.html";
 };
@@ -1259,9 +1294,9 @@ logoutBtn.onclick = () => {
 addAddressBtn.onclick = () => {
   addressId.value = "";
 
-  addressModalTitle.textContent = "إضافة عنوان";
+  addressModalTitle.textContent = "Ø¥Ø¶Ø§ÙØ© Ø¹ÙÙØ§Ù";
 
-  saveAddressBtn.textContent = "حفظ";
+  saveAddressBtn.textContent = "Ø­ÙØ¸";
 
   document.getElementById("addressModal").classList.add("show");
 };
@@ -1290,7 +1325,7 @@ async function changePassword() {
     Swal.fire({
       icon: "warning",
 
-      title: "أكمل البيانات",
+      title: "Ø£ÙÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª",
     });
 
     return;
@@ -1300,7 +1335,7 @@ async function changePassword() {
     Swal.fire({
       icon: "error",
 
-      title: "كلمتا المرور غير متطابقتين",
+      title: "ÙÙÙØªØ§ Ø§ÙÙØ±ÙØ± ØºÙØ± ÙØªØ·Ø§Ø¨ÙØªÙÙ",
     });
 
     return;
@@ -1310,7 +1345,7 @@ async function changePassword() {
     Swal.fire({
       icon: "warning",
 
-      title: "كلمة المرور قصيرة يجب ان تكون على الاقل 6 حروف او ارقام",
+      title: "ÙÙÙØ© Ø§ÙÙØ±ÙØ± ÙØµÙØ±Ø© ÙØ¬Ø¨ Ø§Ù ØªÙÙÙ Ø¹ÙÙ Ø§ÙØ§ÙÙ 6 Ø­Ø±ÙÙ Ø§Ù Ø§Ø±ÙØ§Ù",
     });
 
     return;
@@ -1320,7 +1355,7 @@ async function changePassword() {
     Swal.fire({
       icon: "warning",
 
-      title: "كلمة المرور الجديدة يجب أن تختلف عن الحالية",
+      title: "ÙÙÙØ© Ø§ÙÙØ±ÙØ± Ø§ÙØ¬Ø¯ÙØ¯Ø© ÙØ¬Ø¨ Ø£Ù ØªØ®ØªÙÙ Ø¹Ù Ø§ÙØ­Ø§ÙÙØ©",
     });
 
     return;
@@ -1350,7 +1385,7 @@ async function changePassword() {
     Swal.fire({
       icon: "success",
 
-      title: "تم تغيير كلمة المرور",
+      title: "ØªÙ ØªØºÙÙØ± ÙÙÙØ© Ø§ÙÙØ±ÙØ±",
     });
 
     document.getElementById("oldPassword").value = "";
@@ -1380,7 +1415,7 @@ async function updateProfile() {
     Swal.fire({
       icon: "warning",
 
-      title: "أكمل البيانات",
+      title: "Ø£ÙÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª",
     });
 
     return;
@@ -1389,7 +1424,7 @@ async function updateProfile() {
   if (!password) {
     Swal.fire({
       icon: "warning",
-      title: "اكتب كلمة المرور الحالية",
+      title: "Ø§ÙØªØ¨ ÙÙÙØ© Ø§ÙÙØ±ÙØ± Ø§ÙØ­Ø§ÙÙØ©",
     });
 
     return;
@@ -1434,7 +1469,7 @@ async function updateProfile() {
     Swal.fire({
       icon: "success",
 
-      title: "تم حفظ البيانات",
+      title: "ØªÙ Ø­ÙØ¸ Ø§ÙØ¨ÙØ§ÙØ§Øª",
     });
   } else {
     Swal.fire({
@@ -1488,7 +1523,7 @@ function wishlistAddToCart(id) {
 
         icon: "success",
 
-        title: "تمت إضافة المنتج للسلة"
+        title: "ØªÙØª Ø¥Ø¶Ø§ÙØ© Ø§ÙÙÙØªØ¬ ÙÙØ³ÙØ©"
 
     });
 
