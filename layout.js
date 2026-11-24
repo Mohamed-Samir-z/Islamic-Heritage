@@ -1,7 +1,10 @@
-// إعداد مصفوفة السلة مع تحميل البيانات المخزنة مسبقاً من المتصفح
+function askAdminPassword() {
+    window.location.href = "admin.html";
+}
+// Ø¥Ø¹Ø¯Ø§Ø¯ ÙØµÙÙÙØ© Ø§ÙØ³ÙØ© ÙØ¹ ØªØ­ÙÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙÙØ®Ø²ÙØ© ÙØ³Ø¨ÙØ§Ù ÙÙ Ø§ÙÙØªØµÙØ­
 let cart = JSON.parse(localStorage.getItem("mesk_cart")) || [];
 
-// عناصر واجهة المستخدم المستهدفة
+// Ø¹ÙØ§ØµØ± ÙØ§Ø¬ÙØ© Ø§ÙÙØ³ØªØ®Ø¯Ù Ø§ÙÙØ³ØªÙØ¯ÙØ©
 const menuToggleBtn = document.getElementById("menuToggleBtn");
 const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
 const mobileSidebar = document.getElementById("mobileSidebar");
@@ -30,17 +33,17 @@ function addToCart(product) {
   if (currentQtyInCart >= fullProduct.stock) {
     Swal.fire({
       icon: "warning",
-      title: "وصلت للحد الأقصى من المخزون",
+      title: "ÙØµÙØª ÙÙØ­Ø¯ Ø§ÙØ£ÙØµÙ ÙÙ Ø§ÙÙØ®Ø²ÙÙ",
     });
 
     return;
   }
-  // التحقق من وجود المنتج مسبقاً لزيادة الكمية
+  // Ø§ÙØªØ­ÙÙ ÙÙ ÙØ¬ÙØ¯ Ø§ÙÙÙØªØ¬ ÙØ³Ø¨ÙØ§Ù ÙØ²ÙØ§Ø¯Ø© Ø§ÙÙÙÙØ©
   const existingItem = cart.find((item) => item.id === product.id);
   if (existingItem) {
     existingItem.qty += 1;
 
-    // يحدث البيانات القديمة الموجودة فى السلة
+    // ÙØ­Ø¯Ø« Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙÙØ¯ÙÙØ© Ø§ÙÙÙØ¬ÙØ¯Ø© ÙÙ Ø§ÙØ³ÙØ©
     existingItem.imageUrl = product.imageUrl;
     existingItem.name = product.name;
     existingItem.price = product.price;
@@ -71,21 +74,21 @@ function addToCart(product) {
       confirmButton: "mesk-confirm",
       cancelButton: "mesk-cancel",
     },
-    title: `ّتمت إضافة ${product.name} للسلة`,
+    title: `ÙØªÙØª Ø¥Ø¶Ø§ÙØ© ${product.name} ÙÙØ³ÙØ©`,
     showConfirmButton: false,
     timer: 2500,
     timerProgressBar: true,
   });
 }
 
-// ربط كروت الأقسام بصفحة المنتجات مع فلترة مسبقة
+// Ø±Ø¨Ø· ÙØ±ÙØª Ø§ÙØ£ÙØ³Ø§Ù Ø¨ØµÙØ­Ø© Ø§ÙÙÙØªØ¬Ø§Øª ÙØ¹ ÙÙØªØ±Ø© ÙØ³Ø¨ÙØ©
 document.querySelectorAll(".category-card").forEach((card) => {
   card.addEventListener("click", () => {
     const category = card.getAttribute("data-category");
     switchPage("products-page");
     filterProducts(category);
 
-    // تحديث الزر النشط في الفلتر
+    // ØªØ­Ø¯ÙØ« Ø§ÙØ²Ø± Ø§ÙÙØ´Ø· ÙÙ Ø§ÙÙÙØªØ±
     document.querySelectorAll(".filter-btn").forEach((btn) => {
       if (btn.getAttribute("data-filter") === category)
         btn.classList.add("active");
@@ -94,37 +97,37 @@ document.querySelectorAll(".category-card").forEach((card) => {
   });
 });
 
-// ربط أزرار الهيدر والمنيو الجانبي والفوتر بنظام الصفحات
+// Ø±Ø¨Ø· Ø£Ø²Ø±Ø§Ø± Ø§ÙÙÙØ¯Ø± ÙØ§ÙÙÙÙÙ Ø§ÙØ¬Ø§ÙØ¨Ù ÙØ§ÙÙÙØªØ± Ø¨ÙØ¸Ø§Ù Ø§ÙØµÙØ­Ø§Øª
 document
   .querySelectorAll(".nav-link-btn, .sidebar-link-btn, .footer-nav-btn")
   .forEach((button) => {
     button.addEventListener("click", (e) => {
       const target = button.getAttribute("data-target");
       switchPage(target);
-      closeMenu(); // إغلاق المنيو إذا كنا في الموبايل
+      closeMenu(); // Ø¥ØºÙØ§Ù Ø§ÙÙÙÙÙ Ø¥Ø°Ø§ ÙÙØ§ ÙÙ Ø§ÙÙÙØ¨Ø§ÙÙ
     });
   });
 
 function saveAndRefreshCart() {
   localStorage.setItem("mesk_cart", JSON.stringify(cart));
   updateCartUI();
-  showToast(" تمت إضافة المنتج إلى السلة ");
+  showToast(" ØªÙØª Ø¥Ø¶Ø§ÙØ© Ø§ÙÙÙØªØ¬ Ø¥ÙÙ Ø§ÙØ³ÙØ© ");
 }
 
-// 1. نظام الانتقال بين الصفحات (SPA Switcher)
+// 1. ÙØ¸Ø§Ù Ø§ÙØ§ÙØªÙØ§Ù Ø¨ÙÙ Ø§ÙØµÙØ­Ø§Øª (SPA Switcher)
 function switchPage(pageId) {
-  // إخفاء جميع الصفحات
+  // Ø¥Ø®ÙØ§Ø¡ Ø¬ÙÙØ¹ Ø§ÙØµÙØ­Ø§Øª
   document.querySelectorAll(".page-view").forEach((view) => {
     view.classList.remove("active");
   });
-  // إظهار الصفحة المستهدفة
+  // Ø¥Ø¸ÙØ§Ø± Ø§ÙØµÙØ­Ø© Ø§ÙÙØ³ØªÙØ¯ÙØ©
   const targetPage = document.getElementById(pageId);
   if (targetPage) {
     targetPage.classList.add("active");
     window.scrollTo(0, 0);
   }
 
-  // تحديث حالة الأزرار النشطة (الرئيسية والموبايل)
+  // ØªØ­Ø¯ÙØ« Ø­Ø§ÙØ© Ø§ÙØ£Ø²Ø±Ø§Ø± Ø§ÙÙØ´Ø·Ø© (Ø§ÙØ±Ø¦ÙØ³ÙØ© ÙØ§ÙÙÙØ¨Ø§ÙÙ)
   document
     .querySelectorAll(".nav-link-btn, .sidebar-link-btn")
     .forEach((btn) => {
@@ -137,18 +140,18 @@ function switchPage(pageId) {
 }
 
 function updateCartUI() {
-  // حساب إجمالي عدد القطع بالسلة
+  // Ø­Ø³Ø§Ø¨ Ø¥Ø¬ÙØ§ÙÙ Ø¹Ø¯Ø¯ Ø§ÙÙØ·Ø¹ Ø¨Ø§ÙØ³ÙØ©
   const totalItemsCount = cart.reduce((acc, item) => acc + item.qty, 0);
   cartCount.textContent = totalItemsCount;
 
-  // تأثير الحركة لعداد السلة
+  // ØªØ£Ø«ÙØ± Ø§ÙØ­Ø±ÙØ© ÙØ¹Ø¯Ø§Ø¯ Ø§ÙØ³ÙØ©
   cartCount.classList.add("bump");
   setTimeout(() => cartCount.classList.remove("bump"), 300);
 
   if (cart.length === 0) {
     cartItemsList.innerHTML =
-      '<p class="empty-cart-msg">السلة فارغة حالياً</p>';
-    cartTotalAmount.textContent = "0 ج.م";
+      '<p class="empty-cart-msg">Ø§ÙØ³ÙØ© ÙØ§Ø±ØºØ© Ø­Ø§ÙÙØ§Ù</p>';
+    cartTotalAmount.textContent = "0 Ø¬.Ù";
     return;
   }
 
@@ -177,7 +180,7 @@ function updateCartUI() {
                     ${
                       item.outOfStock
                         ? `<div class="out-stock-label">
-                            نفد المخزون
+                            ÙÙØ¯ Ø§ÙÙØ®Ø²ÙÙ
                             </div>`
                         : ""
                     }
@@ -185,7 +188,7 @@ function updateCartUI() {
                 </div>
 
                 <div class="cart-item-price">
-                    ${item.price} ج.م
+                    ${item.price} Ø¬.Ù
                 </div>
 
                 <div class="cart-qty-controls">
@@ -194,7 +197,7 @@ function updateCartUI() {
                       item.outOfStock
                         ? `
                         <span class="stock-ended">
-                            غير متوفر حالياً
+                            ØºÙØ± ÙØªÙÙØ± Ø­Ø§ÙÙØ§Ù
                         </span>
                         `
                         : `
@@ -233,11 +236,11 @@ function updateCartUI() {
     cartItemsList.insertAdjacentHTML("beforeend", itemHTML);
   });
 
-  cartTotalAmount.textContent = `${total} ج.م`;
+  cartTotalAmount.textContent = `${total} Ø¬.Ù`;
 }
 
 
-// تغيير الكمية بالزيادة والنقصان
+// ØªØºÙÙØ± Ø§ÙÙÙÙØ© Ø¨Ø§ÙØ²ÙØ§Ø¯Ø© ÙØ§ÙÙÙØµØ§Ù
 window.changeQty = function (id, change) {
   const item = cart.find((item) => String(item.id) === String(id));
 
@@ -250,7 +253,7 @@ window.changeQty = function (id, change) {
   if (change > 0 && item.qty >= fullProduct.stock) {
     Swal.fire({
       icon: "warning",
-      title: "لا يوجد مخزون إضافي",
+      title: "ÙØ§ ÙÙØ¬Ø¯ ÙØ®Ø²ÙÙ Ø¥Ø¶Ø§ÙÙ",
     });
 
     return;
@@ -265,7 +268,7 @@ window.changeQty = function (id, change) {
   saveAndRefreshCart();
 };
 
-// حذف منتج بالكامل من السلة
+// Ø­Ø°Ù ÙÙØªØ¬ Ø¨Ø§ÙÙØ§ÙÙ ÙÙ Ø§ÙØ³ÙØ©
 window.removeFromCart = function (id) {
   cart = cart.filter((item) => String(item.id) !== String(id));
 
@@ -289,7 +292,7 @@ sidebarOverlay.addEventListener("click", () => {
   cartSidebar.classList.remove("active");
 });
 
-// 3. فتح وإغلاق سلة المشتريات
+// 3. ÙØªØ­ ÙØ¥ØºÙØ§Ù Ø³ÙØ© Ø§ÙÙØ´ØªØ±ÙØ§Øª
 cartToggleBtn.addEventListener("click", () => {
   cartSidebar.classList.add("active");
   sidebarOverlay.classList.add("active");
@@ -299,7 +302,7 @@ cartCloseBtn.addEventListener("click", () => {
   sidebarOverlay.classList.remove("active");
 });
 
-// 4. تفعيل وإغلاق شريط البحث والبحث الفوري
+// 4. ØªÙØ¹ÙÙ ÙØ¥ØºÙØ§Ù Ø´Ø±ÙØ· Ø§ÙØ¨Ø­Ø« ÙØ§ÙØ¨Ø­Ø« Ø§ÙÙÙØ±Ù
 searchToggleBtn.addEventListener("click", () => {
   searchBarContainer.classList.toggle("active");
   if (searchBarContainer.classList.contains("active")) {
@@ -307,8 +310,8 @@ searchToggleBtn.addEventListener("click", () => {
   }
 });
 
-// --- كود بناء سبحة اللوجو الديناميكية مع الشرابة المتحركة ---
-// --- كود بناء وتدوير السبحة والشرابة ديناميكياً بأعلى دقة هندسية ---
+// --- ÙÙØ¯ Ø¨ÙØ§Ø¡ Ø³Ø¨Ø­Ø© Ø§ÙÙÙØ¬Ù Ø§ÙØ¯ÙÙØ§ÙÙÙÙØ© ÙØ¹ Ø§ÙØ´Ø±Ø§Ø¨Ø© Ø§ÙÙØªØ­Ø±ÙØ© ---
+// --- ÙÙØ¯ Ø¨ÙØ§Ø¡ ÙØªØ¯ÙÙØ± Ø§ÙØ³Ø¨Ø­Ø© ÙØ§ÙØ´Ø±Ø§Ø¨Ø© Ø¯ÙÙØ§ÙÙÙÙØ§Ù Ø¨Ø£Ø¹ÙÙ Ø¯ÙØ© ÙÙØ¯Ø³ÙØ© ---
 let tasselAnimationId = null;
 
 function buildTasbihRing() {
@@ -324,7 +327,7 @@ function buildTasbihRing() {
   const radius = containerWidth / 2 - 6;
   const center = containerWidth / 2;
 
-  // 1. بناء الخرز في أماكنه الثابتة داخل الـ الـ Ring
+  // 1. Ø¨ÙØ§Ø¡ Ø§ÙØ®Ø±Ø² ÙÙ Ø£ÙØ§ÙÙÙ Ø§ÙØ«Ø§Ø¨ØªØ© Ø¯Ø§Ø®Ù Ø§ÙÙ Ø§ÙÙ Ring
   for (let i = 0; i < beadsCount; i++) {
     const bead = document.createElement("div");
     bead.className = "bead";
@@ -338,13 +341,13 @@ function buildTasbihRing() {
 
     ring.appendChild(bead);
 
-    // خرز الفواصل
+    // Ø®Ø±Ø² Ø§ÙÙÙØ§ØµÙ
     if (i % 11 === 0) {
       bead.style.background =
         "radial-gradient(circle at 35% 35%, #fff, #c5a880, #8a6f43)";
     }
 
-    // تمييز الخرزة الرئيسية (رقم 0) اللي هيلحقها الدلاية
+    // ØªÙÙÙØ² Ø§ÙØ®Ø±Ø²Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ© (Ø±ÙÙ 0) Ø§ÙÙÙ ÙÙÙØ­ÙÙØ§ Ø§ÙØ¯ÙØ§ÙØ©
     if (i === 0) {
       bead.style.background =
         "radial-gradient(circle at 35% 35%, #fff, #ebd4b2, #a68453)";
@@ -353,26 +356,26 @@ function buildTasbihRing() {
     }
   }
 
-  // 2. تحريك الشرابة ديناميكياً مع دوران الـ CSS (المحاكاة الفيزيائية الفخمة)
+  // 2. ØªØ­Ø±ÙÙ Ø§ÙØ´Ø±Ø§Ø¨Ø© Ø¯ÙÙØ§ÙÙÙÙØ§Ù ÙØ¹ Ø¯ÙØ±Ø§Ù Ø§ÙÙ CSS (Ø§ÙÙØ­Ø§ÙØ§Ø© Ø§ÙÙÙØ²ÙØ§Ø¦ÙØ© Ø§ÙÙØ®ÙØ©)
   if (tassel) {
-    // وقت بداية الأنيميشن لربطه بالـ CSS (السبحة بتلف لفة كاملة كل 25 ثانية بناء على الـ CSS)
+    // ÙÙØª Ø¨Ø¯Ø§ÙØ© Ø§ÙØ£ÙÙÙÙØ´Ù ÙØ±Ø¨Ø·Ù Ø¨Ø§ÙÙ CSS (Ø§ÙØ³Ø¨Ø­Ø© Ø¨ØªÙÙ ÙÙØ© ÙØ§ÙÙØ© ÙÙ 25 Ø«Ø§ÙÙØ© Ø¨ÙØ§Ø¡ Ø¹ÙÙ Ø§ÙÙ CSS)
     const startTime = performance.now();
-    const duration = 25000; // 25 ثانية مكتوبة في الـ CSS (animation: spin 25s)
+    const duration = 25000; // 25 Ø«Ø§ÙÙØ© ÙÙØªÙØ¨Ø© ÙÙ Ø§ÙÙ CSS (animation: spin 25s)
 
 function updateTasselPosition(currentTime) {
         const elapsedTime = currentTime - startTime;
 
-        // حساب نسبة الدوران الحالية (من 0 لـ 1)
+        // Ø­Ø³Ø§Ø¨ ÙØ³Ø¨Ø© Ø§ÙØ¯ÙØ±Ø§Ù Ø§ÙØ­Ø§ÙÙØ© (ÙÙ 0 ÙÙ 1)
         const progress = (elapsedTime % duration) / duration;
 
-        // تحويل النسبة لزاوية بالراديان (مع إضافة Math.PI / 2 لتبدأ الشرابة من الأسفل تماماً تزامناً مع الخرزة 0)
+        // ØªØ­ÙÙÙ Ø§ÙÙØ³Ø¨Ø© ÙØ²Ø§ÙÙØ© Ø¨Ø§ÙØ±Ø§Ø¯ÙØ§Ù (ÙØ¹ Ø¥Ø¶Ø§ÙØ© Math.PI / 2 ÙØªØ¨Ø¯Ø£ Ø§ÙØ´Ø±Ø§Ø¨Ø© ÙÙ Ø§ÙØ£Ø³ÙÙ ØªÙØ§ÙØ§Ù ØªØ²Ø§ÙÙØ§Ù ÙØ¹ Ø§ÙØ®Ø±Ø²Ø© 0)
         const currentAngle = progress * Math.PI * 2 + 0 * Math.PI * 2;
 
-        // حساب الإحداثيات الديناميكية لموقع الخرزة رقم 0 أثناء دورانها
+        // Ø­Ø³Ø§Ø¨ Ø§ÙØ¥Ø­Ø¯Ø§Ø«ÙØ§Øª Ø§ÙØ¯ÙÙØ§ÙÙÙÙØ© ÙÙÙÙØ¹ Ø§ÙØ®Ø±Ø²Ø© Ø±ÙÙ 0 Ø£Ø«ÙØ§Ø¡ Ø¯ÙØ±Ø§ÙÙØ§
         const tasselX = Math.cos(currentAngle) * radius + center;
         const tasselY = Math.sin(currentAngle) * radius + center;
 
-        // نقل الشرابة للمكان الجديد مع الحفاظ على الـ transform الـ خاص بالـ Swing من الـ CSS
+        // ÙÙÙ Ø§ÙØ´Ø±Ø§Ø¨Ø© ÙÙÙÙØ§Ù Ø§ÙØ¬Ø¯ÙØ¯ ÙØ¹ Ø§ÙØ­ÙØ§Ø¸ Ø¹ÙÙ Ø§ÙÙ transform Ø§ÙÙ Ø®Ø§Øµ Ø¨Ø§ÙÙ Swing ÙÙ Ø§ÙÙ CSS
         tassel.style.left = `${tasselX}px`;
         tassel.style.top = `${tasselY}px`;
 
@@ -382,7 +385,7 @@ function updateTasselPosition(currentTime) {
     }
 }
 
-// تشغيل وتحديث الدالة فوراً وعند تغيير حجم الشاشة
+// ØªØ´ØºÙÙ ÙØªØ­Ø¯ÙØ« Ø§ÙØ¯Ø§ÙØ© ÙÙØ±Ø§Ù ÙØ¹ÙØ¯ ØªØºÙÙØ± Ø­Ø¬Ù Ø§ÙØ´Ø§Ø´Ø©
 document.addEventListener("DOMContentLoaded", buildTasbihRing);
 window.addEventListener("resize", buildTasbihRing);
 buildTasbihRing();
@@ -419,66 +422,8 @@ logo.addEventListener("touchcancel", () => {
     clearTimeout(pressTimer);
 });
 
-const ADMIN_PASSWORD = "Spark2026";
-let adminAttempts = 0;
 
-function askAdminPassword() {
-    meskAlert
-        .fire({
-        title: "لوحة التحكم",
 
-        html: "<b>أدخل كلمة المرور</b>",
-
-        icon: "question",
-
-        input: "password",
-
-        inputPlaceholder: "كلمة المرور",
-
-        confirmButtonText: "دخول",
-
-        backdrop: `
-                rgba(0,0,0,0.7)
-                url("https://media.tenor.com/GfSX-u7VGM4AAAAC/coding.gif")
-                center top
-                no-repeat
-            `,
-        cancelButtonText: "إلغاء",
-
-        showCancelButton: true,
-        })
-        .then((result) => {
-        if (!result.isConfirmed) return;
-
-        if (result.value === ADMIN_PASSWORD) {
-            window.location.href = "admin.html";
-        } else {
-            adminAttempts++;
-
-            if (adminAttempts >= 2) {
-            Swal.fire({
-                icon: "error",
-
-                title: "تم رفض الدخول",
-
-                text: "تم تجاوز عدد المحاولات",
-            }).then(() => {
-                window.location.href = "index.html";
-            });
-            } else {
-            Swal.fire({
-                icon: "error",
-
-                title: "كلمة المرور غير صحيحة",
-
-                text: "حاول مرة أخرى",
-            }).then(() => {
-                askAdminPassword();
-            });
-            }
-        }
-        });
-}
 
 function showToast(message, type = "success") {
     const container = document.getElementById("toastContainer");
