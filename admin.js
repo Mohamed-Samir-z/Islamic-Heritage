@@ -1,8 +1,86 @@
 const WEB_APP_URL =
   "https://script.google.com/macros/s/AKfycbyLu7JJfHoSyWbIjO0vwybOyWO1SFU_LTqB-k9T3pY99u3xVZLRGVq-1C8TPB-m7XCPzg/exec";
 
-// مفتاح الـ API الخاص بك الذي أرسلته من موقع ImgBB
-const IMGBB_API_KEY = "725d3e4c50df666dca90e19e483a2a8d";
+// ===== Admin auth layer v71: key login, session token, backend call interceptor =====
+let ADMIN_TOKEN = sessionStorage.getItem("mesk_admin_token") || "";
+
+async function adminLogin(key) {
+  try {
+    const r = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: "adminLogin", key }),
+    });
+    const j = await r.json();
+    if (j && j.success && j.token) {
+      ADMIN_TOKEN = j.token;
+      sessionStorage.setItem("mesk_admin_token", j.token);
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+function adminLogout() {
+  ADMIN_TOKEN = "";
+  sessionStorage.removeItem("mesk_admin_token");
+  showAdminLogin();
+}
+
+function showAdminLogin() {
+  if (document.getElementById("meskAdminLoginOverlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "meskAdminLoginOverlay";
+  ov.style.cssText = "position:fixed;inset:0;background:rgba(15,23,42,.98);display:flex;align-items:center;justify-content:center;z-index:999999;direction:rtl";
+  ov.innerHTML = '<div style="background:#1e293b;padding:32px;border-radius:16px;width:min(360px,90vw);text-align:center;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.5)">'
+    + '<h2 style="margin:0 0 8px">ÙÙØ­Ø© Ø§ÙØªØ­ÙÙ</h2>'
+    + '<p style="color:#94a3b8;font-size:14px;margin:0 0 16px">Ø£Ø¯Ø®Ù ÙÙØªØ§Ø­ Ø§ÙØ£Ø¯ÙÙ ÙÙÙØªØ§Ø¨Ø¹Ø©</p>'
+    + '<input id="meskAdminKeyInput" type="password" placeholder="ÙÙØªØ§Ø­ Ø§ÙØ£Ø¯ÙÙ" style="width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;margin-bottom:12px;box-sizing:border-box">'
+    + '<button id="meskAdminLoginBtn" style="width:100%;padding:12px;border:none;border-radius:10px;background:#d4af37;color:#111;font-weight:bold;cursor:pointer">Ø¯Ø®ÙÙ</button>'
+    + '<p id="meskAdminLoginErr" style="color:#f87171;font-size:13px;margin:10px 0 0;display:none">Ø§ÙÙÙØªØ§Ø­ ØºÙØ± ØµØ­ÙØ­ Ø£Ù Ø§ÙØªÙØª Ø§ÙÙØ­Ø§ÙÙØ§Øª</p>'
+    + '</div>';
+  const submit = async () => {
+    const key = document.getElementById("meskAdminKeyInput").value.trim();
+    if (!key) return;
+    const ok = await adminLogin(key);
+    if (ok) { ov.remove(); try { initAdmin(); } catch (e) { location.reload(); } }
+    else { document.getElementById("meskAdminLoginErr").style.display = "block"; }
+  };
+  const bind = () => {
+    document.getElementById("meskAdminLoginBtn").onclick = submit;
+    document.getElementById("meskAdminKeyInput").addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+  };
+  if (document.body) { document.body.appendChild(ov); bind(); }
+  else document.addEventListener("DOMContentLoaded", () => { document.body.appendChild(ov); bind(); });
+}
+
+(function () {
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function (url, opts) {
+    try {
+      if (typeof url === "string" && url.startsWith(WEB_APP_URL)) {
+        if (opts && opts.body) {
+          const b = JSON.parse(opts.body);
+          if (b.action !== "adminLogin") b.token = ADMIN_TOKEN;
+          opts = Object.assign({}, opts, { body: JSON.stringify(b) });
+        } else {
+          url += (url.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(ADMIN_TOKEN);
+        }
+      }
+    } catch (e) {}
+    return _origFetch(url, opts).then((r) => {
+      try {
+        return r.clone().json().then((j) => {
+          if (j && j.error === "unauthorized" && typeof url === "string" && url.startsWith(WEB_APP_URL)) adminLogout();
+          return r;
+        }).catch(() => r);
+      } catch (e) { return r; }
+    });
+  };
+})();
+// ===== end admin auth layer =====
+
+
 
 /* ===========================================================
     GLOBAL VARIABLES
@@ -180,13 +258,13 @@ function renderCategoriesToSelects() {
   const productCategorySelect = document.getElementById("productCategory");
   if (productCategorySelect) {
     productCategorySelect.innerHTML = `
-      <option value="">اختر القسم</option>
+      <option value="">Ø§Ø®ØªØ± Ø§ÙÙØ³Ù</option>
       ${options}
     `;
   }
 
   bannerCategorySelect.innerHTML = `
-    <option value="">بدون قسم</option>
+    <option value="">Ø¨Ø¯ÙÙ ÙØ³Ù</option>
     ${options}
   `;
 }
@@ -195,7 +273,7 @@ function renderCategoriesList() {
   const list = categoriesList;
 
   if (!categories.length) {
-    list.innerHTML = `<p>لا توجد أقسام بعد</p>`;
+    list.innerHTML = `<p>ÙØ§ ØªÙØ¬Ø¯ Ø£ÙØ³Ø§Ù Ø¨Ø¹Ø¯</p>`;
     return;
   }
 
@@ -205,8 +283,8 @@ function renderCategoriesList() {
       <div class="category-row">
         <span class="category-name">${cat.name}</span>
         <div class="category-actions">
-          <button class="edit-category-btn" data-id="${cat.id}" data-name="${cat.name}">تعديل <i class="fas fa-pen"></i></button>
-          <button class="delete-category-btn" data-id="${cat.id}">حذف <i class="fas fa-trash"></i></button>
+          <button class="edit-category-btn" data-id="${cat.id}" data-name="${cat.name}">ØªØ¹Ø¯ÙÙ <i class="fas fa-pen"></i></button>
+          <button class="delete-category-btn" data-id="${cat.id}">Ø­Ø°Ù <i class="fas fa-trash"></i></button>
         </div>
       </div>
     `,
@@ -242,7 +320,7 @@ saveCategoryBtn.addEventListener("click", async () => {
   const name = categoryNameInput.value.trim();
 
   if (!name) {
-    meskAlert.fire({ icon: "warning", title: "اكتب اسم القسم" });
+    meskAlert.fire({ icon: "warning", title: "Ø§ÙØªØ¨ Ø§Ø³Ù Ø§ÙÙØ³Ù" });
     return;
   }
 
@@ -264,7 +342,7 @@ saveCategoryBtn.addEventListener("click", async () => {
   categoryEditOldName = "";
 
   await refreshCategoriesUI();
-  meskAlert.fire({ icon: "success", title: "تم حفظ القسم" });
+  meskAlert.fire({ icon: "success", title: "ØªÙ Ø­ÙØ¸ Ø§ÙÙØ³Ù" });
 });
 
 categoriesList.addEventListener("click", async (e) => {
@@ -283,8 +361,8 @@ categoriesList.addEventListener("click", async (e) => {
 
     const confirm = await meskAlert.fire({
       icon: "warning",
-      title: "حذف القسم",
-      text: "هل تريد حذف القسم؟",
+      title: "Ø­Ø°Ù Ø§ÙÙØ³Ù",
+      text: "ÙÙ ØªØ±ÙØ¯ Ø­Ø°Ù Ø§ÙÙØ³ÙØ",
       showCancelButton: true,
     });
 
@@ -300,7 +378,7 @@ categoriesList.addEventListener("click", async (e) => {
     });
 
     await refreshCategoriesUI();
-    meskAlert.fire({ icon: "success", title: "تم حذف القسم" });
+    meskAlert.fire({ icon: "success", title: "ØªÙ Ø­Ø°Ù Ø§ÙÙØ³Ù" });
   }
 });
 
@@ -361,12 +439,12 @@ saveBannerBtn.addEventListener("click", async () => {
   if (linkType === "product") linkValue = bannerProductSelect.value;
 
   if (!title) {
-    meskAlert.fire({ icon: "warning", title: "اكتب عنوان البانر" });
+    meskAlert.fire({ icon: "warning", title: "Ø§ÙØªØ¨ Ø¹ÙÙØ§Ù Ø§ÙØ¨Ø§ÙØ±" });
     return;
   }
 
   meskAlert.fire({
-    title: "جاري حفظ البانر...",
+    title: "Ø¬Ø§Ø±Ù Ø­ÙØ¸ Ø§ÙØ¨Ø§ÙØ±...",
     didOpen: () => Swal.showLoading(),
     allowOutsideClick: false,
   });
@@ -381,7 +459,7 @@ saveBannerBtn.addEventListener("click", async () => {
 
   if (!imageUrl) {
     Swal.close();
-    meskAlert.fire({ icon: "error", title: "الصورة مطلوبة" });
+    meskAlert.fire({ icon: "error", title: "Ø§ÙØµÙØ±Ø© ÙØ·ÙÙØ¨Ø©" });
     return;
   }
 
@@ -401,11 +479,11 @@ saveBannerBtn.addEventListener("click", async () => {
 
   Swal.close();
   bannerModal.classList.remove("active");
-  meskAlert.fire({ icon: "success", title: "تم الحفظ بنجاح" });
+  meskAlert.fire({ icon: "success", title: "ØªÙ Ø§ÙØ­ÙØ¸ Ø¨ÙØ¬Ø§Ø­" });
 });
 
 
-// دالة لجلب البيانات من جوجل شيت
+// Ø¯Ø§ÙØ© ÙØ¬ÙØ¨ Ø§ÙØ¨ÙØ§ÙØ§Øª ÙÙ Ø¬ÙØ¬Ù Ø´ÙØª
 async function fetchProducts() {
   try {
     const response = await fetch(WEB_APP_URL);
@@ -421,7 +499,7 @@ async function fetchProducts() {
     PRODUCTS
 =========================================================== */
 
-// دالة عرض المنتجات
+// Ø¯Ø§ÙØ© Ø¹Ø±Ø¶ Ø§ÙÙÙØªØ¬Ø§Øª
 async function renderProductsTable(list = null) {
   if (!products.length) {
     products = await fetchProducts();
@@ -445,13 +523,13 @@ async function renderProductsTable(list = null) {
     if (Number(product.stock) <= 0) {
       stockWarning = `
         <div class="out-stock-warning">
-        ❌ نفد المخزون
+        â ÙÙØ¯ Ø§ÙÙØ®Ø²ÙÙ
         </div>
         `;
     } else if (Number(product.stock) <= 5) {
       stockWarning = `
         <div class="low-stock-warning">
-        ⚠ متبقي ${product.stock} فقط
+        â  ÙØªØ¨ÙÙ ${product.stock} ÙÙØ·
         </div>
         `;
     }
@@ -475,18 +553,18 @@ async function renderProductsTable(list = null) {
 
         <h3>${product.name}</h3>
 
-        <p>${product.price} ج.م</p>
+        <p>${product.price} Ø¬.Ù</p>
 
         ${stockWarning}
 
         <div class="admin-actions">
 
         <button class="edit-btn" data-id="${product.id}">
-        تعديل
+        ØªØ¹Ø¯ÙÙ
         </button>
 
         <button class="delete-btn" data-id="${product.id}">
-        حذف
+        Ø­Ø°Ù
         </button>
 
         </div>
@@ -507,26 +585,26 @@ function copyCustomer(orderId) {
 
   const text = `
 
-    الاسم : ${order.customerName}
+    Ø§ÙØ§Ø³Ù : ${order.customerName}
 
-    الهاتف : ${order.phone}
+    Ø§ÙÙØ§ØªÙ : ${order.phone}
 
-    العنوان : ${order.address}
+    Ø§ÙØ¹ÙÙØ§Ù : ${order.address}
 
-    المدينة : ${order.city}
+    Ø§ÙÙØ¯ÙÙØ© : ${order.city}
 
   `;
 
   navigator.clipboard.writeText(text);
 
-  showToast("✅ تم نسخ البيانات");
+  showToast("â ØªÙ ÙØ³Ø® Ø§ÙØ¨ÙØ§ÙØ§Øª");
 }
 
 async function deleteProduct(id) {
   const result = await meskAlert.fire({
     icon: "warning",
-    title: "حذف المنتج",
-    text: "هل تريد حذف المنتج؟",
+    title: "Ø­Ø°Ù Ø§ÙÙÙØªØ¬",
+    text: "ÙÙ ØªØ±ÙØ¯ Ø­Ø°Ù Ø§ÙÙÙØªØ¬Ø",
     showCancelButton: true,
   });
 
@@ -544,7 +622,7 @@ async function deleteProduct(id) {
     }),
   });
 
-  meskAlert.fire({ icon: "success", title: "تم الحذف" }).then(() => {
+  meskAlert.fire({ icon: "success", title: "ØªÙ Ø§ÙØ­Ø°Ù" }).then(() => {
     renderProductsTable();
     updateDashboard();
   });
@@ -589,12 +667,12 @@ async function editProduct(id) {
   await refreshCategoriesUI();
   document.getElementById("productCategory").value = product.category || "";
   modal.classList.add("active");
-  document.getElementById("saveProductBtn").textContent = "حفظ التعديلات";
+  document.getElementById("saveProductBtn").textContent = "Ø­ÙØ¸ Ø§ÙØªØ¹Ø¯ÙÙØ§Øª";
   document.getElementById("removeMainImage").onclick = () => {
     mainImage = "";
     imageDeleted = true;
     document.getElementById("mainImagePreview").innerHTML = "";
-    alert("تم حذف الصورة الرئيسية");
+    alert("ØªÙ Ø­Ø°Ù Ø§ÙØµÙØ±Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ©");
   };
 }
 
@@ -605,7 +683,7 @@ addBtn.onclick = () => {
   imageDeleted = false;
   editMode = false;
   editProductId = null;
-  document.getElementById("saveProductBtn").textContent = "حفظ المنتج";
+  document.getElementById("saveProductBtn").textContent = "Ø­ÙØ¸ Ø§ÙÙÙØªØ¬";
   modal.classList.add("active");
 
   document.getElementById("productName").value = "";
@@ -625,37 +703,26 @@ addBtn.onclick = () => {
 
 let imageDeleted = false;
 
-// دالة مخصصة لرفع الصور إلى ImgBB بشكل سريع تماشياً مع معايير الـ API الخاصة بهم
+// Ø¯Ø§ÙØ© ÙØ®ØµØµØ© ÙØ±ÙØ¹ Ø§ÙØµÙØ± Ø¥ÙÙ ImgBB Ø¨Ø´ÙÙ Ø³Ø±ÙØ¹ ØªÙØ§Ø´ÙØ§Ù ÙØ¹ ÙØ¹Ø§ÙÙØ± Ø§ÙÙ API Ø§ÙØ®Ø§ØµØ© Ø¨ÙÙ
 async function uploadToImgBB(base64Data) {
   if (!base64Data) return "";
-  // إذا كانت الصورة عبارة عن رابط قديم مرفوع مسبقاً لا نرفعها مرة أخرى
+  // Ø±ÙØ§Ø¨Ø· ÙØ¯ÙÙØ© ÙØ±ÙÙØ¹Ø© ÙØ³Ø¨ÙØ§Ù ÙØ§ ØªÙØ±ÙØ¹ ÙØ±Ø© Ø£Ø®Ø±Ù
   if (base64Data.startsWith("http://") || base64Data.startsWith("https://")) {
     return base64Data;
   }
-
-  let base64Image = base64Data;
-  if (base64Data.includes(",")) {
-    base64Image = base64Data.split(",")[1];
-  }
-
-  const formData = new FormData();
-  formData.append("image", base64Image);
-
+  const base64Image = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
   try {
-    const response = await fetch(
-      `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: "uploadImage", image: base64Image }),
+    });
     const result = await response.json();
-    if (result.success && result.data && result.data.url) {
-      return result.data.url;
-    } else {
-      console.error("ImgBB Error:", result);
-      return "";
+    if (result.success && result.url) {
+      return result.url;
     }
+    console.error("Upload error:", result.error || "failed");
+    return "";
   } catch (error) {
     console.error("Upload failed:", error);
     return "";
@@ -677,7 +744,7 @@ async function saveProductToSheet(productData) {
       description: productData.description || "",
     };
 
-    // تم تعديل الوضع هنا ليكون 'cors' أو تركه افتراضياً لاستقبال رد السكريبت النظيف وتفادي التعليق
+    // ØªÙ ØªØ¹Ø¯ÙÙ Ø§ÙÙØ¶Ø¹ ÙÙØ§ ÙÙÙÙÙ 'cors' Ø£Ù ØªØ±ÙÙ Ø§ÙØªØ±Ø§Ø¶ÙØ§Ù ÙØ§Ø³ØªÙØ¨Ø§Ù Ø±Ø¯ Ø§ÙØ³ÙØ±ÙØ¨Øª Ø§ÙÙØ¸ÙÙ ÙØªÙØ§Ø¯Ù Ø§ÙØªØ¹ÙÙÙ
     await fetch(WEB_APP_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
@@ -687,7 +754,7 @@ async function saveProductToSheet(productData) {
     meskAlert
       .fire({
         icon: "success",
-        title: "تم الحفظ بنجاح",
+        title: "ØªÙ Ø§ÙØ­ÙØ¸ Ø¨ÙØ¬Ø§Ø­",
       })
       .then(() => {
         modal.classList.remove("active");
@@ -696,7 +763,7 @@ async function saveProductToSheet(productData) {
       });
   } catch (error) {
     console.error("Save Error:", error);
-    meskAlert.fire({ icon: "error", title: "فشل الحفظ" });
+    meskAlert.fire({ icon: "error", title: "ÙØ´Ù Ø§ÙØ­ÙØ¸" });
   }
 }
 
@@ -714,23 +781,23 @@ document
     const descVal = document.getElementById("productDescription").value.trim();
 
     if (!nameVal || !priceVal) {
-      alert("يرجى ملء الحقول الأساسية كالإسم والسعر.");
+      alert("ÙØ±Ø¬Ù ÙÙØ¡ Ø§ÙØ­ÙÙÙ Ø§ÙØ£Ø³Ø§Ø³ÙØ© ÙØ§ÙØ¥Ø³Ù ÙØ§ÙØ³Ø¹Ø±.");
       return;
     }
 
     meskAlert.fire({
-      title: "جاري رفع الصور وحفظ البيانات...",
+      title: "Ø¬Ø§Ø±Ù Ø±ÙØ¹ Ø§ÙØµÙØ± ÙØ­ÙØ¸ Ø§ÙØ¨ÙØ§ÙØ§Øª...",
       didOpen: () => Swal.showLoading(),
       allowOutsideClick: false,
     });
 
-    // 1. ضغط ثم رفع الصورة الرئيسية مباشرة لـ ImgBB
+    // 1. Ø¶ØºØ· Ø«Ù Ø±ÙØ¹ Ø§ÙØµÙØ±Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ© ÙØ¨Ø§Ø´Ø±Ø© ÙÙ ImgBB
     const compressedMain = imageDeleted
       ? ""
       : await compressImage(mainImage || current.imageUrl || "");
     const finalImageUrl = await uploadToImgBB(compressedMain);
 
-    // 2. ضغط ثم رفع الصور الفرعية لـ ImgBB
+    // 2. Ø¶ØºØ· Ø«Ù Ø±ÙØ¹ Ø§ÙØµÙØ± Ø§ÙÙØ±Ø¹ÙØ© ÙÙ ImgBB
     const finalExtraImages = [];
     for (let img of extraImages) {
       const compressedImg = await compressImage(img);
@@ -762,7 +829,7 @@ function renderImagesPreview() {
     preview.innerHTML += `
     <div class="preview-item">
     <img src="${img}">
-    <div class="remove-image" onclick="removeImage(${index})">×</div>
+    <div class="remove-image" onclick="removeImage(${index})">Ã</div>
     </div>
     `;
   });
@@ -777,7 +844,7 @@ document.querySelector(".close-modal").onclick = () => {
   modal.classList.remove("active");
   editMode = false;
   editProductId = null;
-  document.getElementById("saveProductBtn").textContent = "حفظ المنتج";
+  document.getElementById("saveProductBtn").textContent = "Ø­ÙØ¸ Ø§ÙÙÙØªØ¬";
 };
 
 let mainImage = "";
@@ -1027,8 +1094,8 @@ function printOrder(orderId) {
       <tr>
           <td>${item.name}</td>
           <td>${item.qty}</td>
-          <td>${item.price} ج.م</td>
-          <td>${item.qty * item.price} ج.م</td>
+          <td>${item.price} Ø¬.Ù</td>
+          <td>${item.qty * item.price} Ø¬.Ù</td>
       </tr>
   `,
     )
@@ -1045,7 +1112,7 @@ function printOrder(orderId) {
 
     <meta charset="UTF-8">
 
-    <title>فاتورة ${order.id}</title>
+    <title>ÙØ§ØªÙØ±Ø© ${order.id}</title>
 
     <style>
 
@@ -1192,9 +1259,9 @@ function printOrder(orderId) {
 
     <div class="header">
 
-    <h1> <i class="fa-solid fa-book-open"></i> مسك التراث</h1>
+    <h1> <i class="fa-solid fa-book-open"></i> ÙØ³Ù Ø§ÙØªØ±Ø§Ø«</h1>
 
-    <p>فاتورة طلب</p>
+    <p>ÙØ§ØªÙØ±Ø© Ø·ÙØ¨</p>
 
     </div>
 
@@ -1202,7 +1269,7 @@ function printOrder(orderId) {
 
     <div>
 
-    <b>رقم الطلب</b>
+    <b>Ø±ÙÙ Ø§ÙØ·ÙØ¨</b>
 
     <br>
 
@@ -1212,7 +1279,7 @@ function printOrder(orderId) {
 
     <div>
 
-    <b>تاريخ الطلب</b>
+    <b>ØªØ§Ø±ÙØ® Ø§ÙØ·ÙØ¨</b>
 
     <br>
 
@@ -1224,21 +1291,21 @@ function printOrder(orderId) {
 
     <div class="section">
 
-    <h3>بيانات العميل</h3>
+    <h3>Ø¨ÙØ§ÙØ§Øª Ø§ÙØ¹ÙÙÙ</h3>
 
-    <p><b>الاسم:</b> ${order.customerName}</p>
+    <p><b>Ø§ÙØ§Ø³Ù:</b> ${order.customerName}</p>
 
-    <p><b>الهاتف:</b> 0${order.phone}</p>
+    <p><b>Ø§ÙÙØ§ØªÙ:</b> 0${order.phone}</p>
 
-    <p><b>المدينة:</b> ${order.city}</p>
+    <p><b>Ø§ÙÙØ¯ÙÙØ©:</b> ${order.city}</p>
 
-    <p><b>العنوان:</b> ${order.address}</p>
+    <p><b>Ø§ÙØ¹ÙÙØ§Ù:</b> ${order.address}</p>
 
     </div>
 
     <div class="section">
 
-    <h3>المنتجات</h3>
+    <h3>Ø§ÙÙÙØªØ¬Ø§Øª</h3>
 
     <table>
 
@@ -1246,13 +1313,13 @@ function printOrder(orderId) {
 
     <tr>
 
-    <th>المنتج</th>
+    <th>Ø§ÙÙÙØªØ¬</th>
 
-    <th>الكمية</th>
+    <th>Ø§ÙÙÙÙØ©</th>
 
-    <th>السعر</th>
+    <th>Ø§ÙØ³Ø¹Ø±</th>
 
-    <th>الإجمالى</th>
+    <th>Ø§ÙØ¥Ø¬ÙØ§ÙÙ</th>
 
     </tr>
 
@@ -1272,41 +1339,41 @@ function printOrder(orderId) {
 
     <div>
 
-    <span>الإجمالى</span>
+    <span>Ø§ÙØ¥Ø¬ÙØ§ÙÙ</span>
 
-    <b>${order.total} ج.م</b>
-
-    </div>
-
-    <div>
-
-    <span>الشحن</span>
-
-    <b>${order.shipping} ج.م</b>
+    <b>${order.total} Ø¬.Ù</b>
 
     </div>
 
     <div>
 
-    <span>الخصم</span>
+    <span>Ø§ÙØ´Ø­Ù</span>
 
-    <b>${order.discount} ج.م</b>
+    <b>${order.shipping} Ø¬.Ù</b>
 
     </div>
 
     <div>
 
-    <span>الدفع</span>
+    <span>Ø§ÙØ®ØµÙ</span>
 
-    <b>${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع إلكترونياً"}</b>
+    <b>${order.discount} Ø¬.Ù</b>
+
+    </div>
+
+    <div>
+
+    <span>Ø§ÙØ¯ÙØ¹</span>
+
+    <b>${order.paymentMethod == "cash" ? "Ø§ÙØ¯ÙØ¹ Ø¹ÙØ¯ Ø§ÙØ§Ø³ØªÙØ§Ù" : "ÙØ¯ÙÙØ¹ Ø¥ÙÙØªØ±ÙÙÙØ§Ù"}</b>
 
     </div>
 
     <div class="total">
 
-    <span>الإجمالى النهائى</span>
+    <span>Ø§ÙØ¥Ø¬ÙØ§ÙÙ Ø§ÙÙÙØ§Ø¦Ù</span>
 
-    <b>${order.total} ج.م</b>
+    <b>${order.total} Ø¬.Ù</b>
 
     </div>
 
@@ -1314,7 +1381,7 @@ function printOrder(orderId) {
 
     <div class="footer">
 
-    شكراً لتسوقكم من ❤️ مسك التراث
+    Ø´ÙØ±Ø§Ù ÙØªØ³ÙÙÙÙ ÙÙ â¤ï¸ ÙØ³Ù Ø§ÙØªØ±Ø§Ø«
 
     </div>
 
@@ -1373,22 +1440,22 @@ function getPaymentBadge(status) {
   switch (status) {
     case "PAID":
       return `<span class="payment-badge paid">
-            ✅ مدفوع
+            â ÙØ¯ÙÙØ¹
             </span>`;
 
     case "PARTIAL":
       return `<span class="payment-badge partial">
-            🟠 مدفوع جزئياً
+            ð  ÙØ¯ÙÙØ¹ Ø¬Ø²Ø¦ÙØ§Ù
             </span>`;
 
     case "REFUNDED":
       return `<span class="payment-badge refunded">
-            🔵 مسترجع
+            ðµ ÙØ³ØªØ±Ø¬Ø¹
             </span>`;
 
     default:
       return `<span class="payment-badge pending">
-            🔴 غير مدفوع
+            ð´ ØºÙØ± ÙØ¯ÙÙØ¹
             </span>`;
   }
 }
@@ -1399,7 +1466,7 @@ function renderOrders(list = orders) {
     ordersCards.innerHTML = `
         <div class="empty-orders">
 
-            لا توجد طلبات حتى الآن
+            ÙØ§ ØªÙØ¬Ø¯ Ø·ÙØ¨Ø§Øª Ø­ØªÙ Ø§ÙØ¢Ù
 
         </div>
         `;
@@ -1426,42 +1493,42 @@ function renderOrders(list = orders) {
 
                       <option value="NEW"
                       ${order.status === "NEW" ? "selected" : ""}>
-                      جديد
+                      Ø¬Ø¯ÙØ¯
                       </option>
 
                       <option value="REVIEW"
                       ${order.status === "REVIEW" ? "selected" : ""}>
-                      تمت المراجعة
+                      ØªÙØª Ø§ÙÙØ±Ø§Ø¬Ø¹Ø©
                       </option>
 
                       <option value="PROCESSING"
                       ${order.status === "PROCESSING" ? "selected" : ""}>
-                      جارى التجهيز
+                      Ø¬Ø§Ø±Ù Ø§ÙØªØ¬ÙÙØ²
                       </option>
 
                       <option value="PACKED"
                       ${order.status === "PACKED" ? "selected" : ""}>
-                      تم التغليف
+                      ØªÙ Ø§ÙØªØºÙÙÙ
                       </option>
 
                       <option value="SHIPPED"
                       ${order.status === "SHIPPED" ? "selected" : ""}>
-                      خرج للشحن
+                      Ø®Ø±Ø¬ ÙÙØ´Ø­Ù
                       </option>
 
                       <option value="ONWAY"
                       ${order.status === "ONWAY" ? "selected" : ""}>
-                      فى الطريق
+                      ÙÙ Ø§ÙØ·Ø±ÙÙ
                       </option>
 
                       <option value="DELIVERED"
                       ${order.status === "DELIVERED" ? "selected" : ""}>
-                      تم التسليم
+                      ØªÙ Ø§ÙØªØ³ÙÙÙ
                       </option>
 
                       <option value="CANCELLED"
                       ${order.status === "CANCELLED" ? "selected" : ""}>
-                      تم الإلغاء
+                      ØªÙ Ø§ÙØ¥ÙØºØ§Ø¡
                       </option>
 
                   </select>
@@ -1489,41 +1556,41 @@ function renderOrders(list = orders) {
                 </span>
                 <p>
 
-                    📱 ${order.phone}
+                    ð± ${order.phone}
 
                 </p>
 
                 <p>
 
-                    📍 ${order.city}
+                    ð ${order.city}
 
                 </p>
 
                 <p>
 
-                    💰 ${order.total} ج.م
+                    ð° ${order.total} Ø¬.Ù
 
                 </p>
 
                 <p>
 
-                  💳
+                  ð³
 
-                  ${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع"}
-
-                </p>
-
-                <p>
-
-                  🚚
-
-                  ${order.shippingType == "pickup" ? "استلام من المتجر" : "شحن"}
+                  ${order.paymentMethod == "cash" ? "Ø§ÙØ¯ÙØ¹ Ø¹ÙØ¯ Ø§ÙØ§Ø³ØªÙØ§Ù" : "ÙØ¯ÙÙØ¹"}
 
                 </p>
 
                 <p>
 
-                    🛒 ${order.items.length} منتج
+                  ð
+
+                  ${order.shippingType == "pickup" ? "Ø§Ø³ØªÙØ§Ù ÙÙ Ø§ÙÙØªØ¬Ø±" : "Ø´Ø­Ù"}
+
+                </p>
+
+                <p>
+
+                    ð ${order.items.length} ÙÙØªØ¬
 
                     -
 
@@ -1533,7 +1600,7 @@ function renderOrders(list = orders) {
                     0,
                   )}
 
-                  قطعة
+                  ÙØ·Ø¹Ø©
 
                 </p>
 
@@ -1612,7 +1679,7 @@ async function updatePaymentStatus(id, status) {
   const result = await response.json();
 
   if (result.success) {
-    showToast("تم تحديث حالة الدفع");
+    showToast("ØªÙ ØªØ­Ø¯ÙØ« Ø­Ø§ÙØ© Ø§ÙØ¯ÙØ¹");
 
     await loadOrders();
 
@@ -1655,15 +1722,15 @@ async function deleteOrder(id) {
   const result = await meskAlert.fire({
     icon: "warning",
 
-    title: "حذف الطلب",
+    title: "Ø­Ø°Ù Ø§ÙØ·ÙØ¨",
 
-    text: "هل تريد حذف هذا الطلب؟",
+    text: "ÙÙ ØªØ±ÙØ¯ Ø­Ø°Ù ÙØ°Ø§ Ø§ÙØ·ÙØ¨Ø",
 
     showCancelButton: true,
 
-    confirmButtonText: "حذف",
+    confirmButtonText: "Ø­Ø°Ù",
 
-    cancelButtonText: "إلغاء",
+    cancelButtonText: "Ø¥ÙØºØ§Ø¡",
   });
 
   if (!result.isConfirmed) return;
@@ -1688,7 +1755,7 @@ async function deleteOrder(id) {
     meskAlert.fire({
       icon: "success",
 
-      title: "تم حذف الطلب",
+      title: "ØªÙ Ø­Ø°Ù Ø§ÙØ·ÙØ¨",
     });
 
     loadOrders();
@@ -1696,7 +1763,7 @@ async function deleteOrder(id) {
     meskAlert.fire({
       icon: "error",
 
-      title: "فشل حذف الطلب",
+      title: "ÙØ´Ù Ø­Ø°Ù Ø§ÙØ·ÙØ¨",
     });
   }
 }
@@ -1734,30 +1801,30 @@ async function openOrderDetails(orderId) {
 
       <span class="product-qty">
 
-      ${item.qty} قطعة
+      ${item.qty} ÙØ·Ø¹Ø©
 
       </span>
 
     <div>
 
-    الكمية :
+    Ø§ÙÙÙÙØ© :
     <b>${item.qty}</b>
 
     </div>
 
     <div>
 
-    السعر :
+    Ø§ÙØ³Ø¹Ø± :
 
-    <b>${item.price} ج.م</b>
+    <b>${item.price} Ø¬.Ù</b>
 
     </div>
 
     <div>
 
-    الإجمالى :
+    Ø§ÙØ¥Ø¬ÙØ§ÙÙ :
 
-    <b>${item.qty * item.price} ج.م</b>
+    <b>${item.qty * item.price} Ø¬.Ù</b>
 
     </div>
 
@@ -1793,7 +1860,7 @@ async function openOrderDetails(orderId) {
     } else {
       logsHTML = `
       <div class="timeline-empty">
-        لا يوجد سجل للطلب حتى الآن
+        ÙØ§ ÙÙØ¬Ø¯ Ø³Ø¬Ù ÙÙØ·ÙØ¨ Ø­ØªÙ Ø§ÙØ¢Ù
       </div>
     `;
     }
@@ -1813,7 +1880,7 @@ async function openOrderDetails(orderId) {
                       class="action-btn print-order-btn"
                       data-id="${order.id}"
                       onclick="printOrder('${order.id}')">
-                      🖨️ طباعة
+                      ð¨ï¸ Ø·Ø¨Ø§Ø¹Ø©
                     </button>
                 </div>
 
@@ -1826,21 +1893,21 @@ async function openOrderDetails(orderId) {
               data-id="${order.id}"
               onchange="updateOrderStatus('${order.id}',this.value)">
 
-            <option value="NEW" ${order.status === "NEW" ? "selected" : ""}>🟡 جديد</option>
+            <option value="NEW" ${order.status === "NEW" ? "selected" : ""}>ð¡ Ø¬Ø¯ÙØ¯</option>
 
-            <option value="REVIEW" ${order.status === "REVIEW" ? "selected" : ""}>🔵 تمت المراجعة</option>
+            <option value="REVIEW" ${order.status === "REVIEW" ? "selected" : ""}>ðµ ØªÙØª Ø§ÙÙØ±Ø§Ø¬Ø¹Ø©</option>
 
-            <option value="PROCESSING" ${order.status === "PROCESSING" ? "selected" : ""}>🟣 جاري التجهيز</option>
+            <option value="PROCESSING" ${order.status === "PROCESSING" ? "selected" : ""}>ð£ Ø¬Ø§Ø±Ù Ø§ÙØªØ¬ÙÙØ²</option>
 
-            <option value="PACKED" ${order.status === "PACKED" ? "selected" : ""}>📦 تم التغليف</option>
+            <option value="PACKED" ${order.status === "PACKED" ? "selected" : ""}>ð¦ ØªÙ Ø§ÙØªØºÙÙÙ</option>
 
-            <option value="SHIPPED" ${order.status === "SHIPPED" ? "selected" : ""}>🚚 خرج للشحن</option>
+            <option value="SHIPPED" ${order.status === "SHIPPED" ? "selected" : ""}>ð Ø®Ø±Ø¬ ÙÙØ´Ø­Ù</option>
 
-            <option value="ONWAY" ${order.status === "ONWAY" ? "selected" : ""}>🚛 في الطريق</option>
+            <option value="ONWAY" ${order.status === "ONWAY" ? "selected" : ""}>ð ÙÙ Ø§ÙØ·Ø±ÙÙ</option>
 
-            <option value="DELIVERED" ${order.status === "DELIVERED" ? "selected" : ""}>🟢 تم التسليم</option>
+            <option value="DELIVERED" ${order.status === "DELIVERED" ? "selected" : ""}>ð¢ ØªÙ Ø§ÙØªØ³ÙÙÙ</option>
 
-            <option value="CANCELLED" ${order.status === "CANCELLED" ? "selected" : ""}>🔴 تم الإلغاء</option>
+            <option value="CANCELLED" ${order.status === "CANCELLED" ? "selected" : ""}>ð´ ØªÙ Ø§ÙØ¥ÙØºØ§Ø¡</option>
 
             </select>
 
@@ -1850,13 +1917,13 @@ async function openOrderDetails(orderId) {
               class="payment-status-select"
               onchange="updatePaymentStatus('${order.id}',this.value)">
 
-              <option value="PENDING" ${order.paymentStatus == "PENDING" ? "selected" : ""}>🔴 غير مدفوع</option>
+              <option value="PENDING" ${order.paymentStatus == "PENDING" ? "selected" : ""}>ð´ ØºÙØ± ÙØ¯ÙÙØ¹</option>
 
-              <option value="PARTIAL" ${order.paymentStatus == "PARTIAL" ? "selected" : ""}>🟠 مدفوع جزئياً</option>
+              <option value="PARTIAL" ${order.paymentStatus == "PARTIAL" ? "selected" : ""}>ð  ÙØ¯ÙÙØ¹ Ø¬Ø²Ø¦ÙØ§Ù</option>
 
-              <option value="PAID" ${order.paymentStatus == "PAID" ? "selected" : ""}>🟢 مدفوع</option>
+              <option value="PAID" ${order.paymentStatus == "PAID" ? "selected" : ""}>ð¢ ÙØ¯ÙÙØ¹</option>
 
-              <option value="REFUNDED" ${order.paymentStatus == "REFUNDED" ? "selected" : ""}>🔵 تم رد المبلغ</option>
+              <option value="REFUNDED" ${order.paymentStatus == "REFUNDED" ? "selected" : ""}>ðµ ØªÙ Ø±Ø¯ Ø§ÙÙØ¨ÙØº</option>
 
               </select>
 
@@ -1868,7 +1935,7 @@ async function openOrderDetails(orderId) {
 
         <h3 class="order-section-title">
 
-        👤 بيانات العميل
+        ð¤ Ø¨ÙØ§ÙØ§Øª Ø§ÙØ¹ÙÙÙ
 
         </h3>
 
@@ -1876,7 +1943,7 @@ async function openOrderDetails(orderId) {
 
         <div>
 
-        📛
+        ð
 
         <span>
 
@@ -1888,7 +1955,7 @@ async function openOrderDetails(orderId) {
 
         <div>
 
-        📞
+        ð
 
         <span>
 
@@ -1900,7 +1967,7 @@ async function openOrderDetails(orderId) {
 
         <div>
 
-        📍
+        ð
 
         <span>
 
@@ -1912,7 +1979,7 @@ async function openOrderDetails(orderId) {
 
           <div>
 
-          🏠
+          ð 
 
             <span>
 
@@ -1932,14 +1999,14 @@ async function openOrderDetails(orderId) {
 
           onclick="copyCustomer('${order.id}')">
 
-          📋 نسخ البيانات
+          ð ÙØ³Ø® Ø§ÙØ¨ÙØ§ÙØ§Øª
 
         </button>
 
 
         <a href="tel:0${order.phone}" class="customer-btn">
 
-        📞 اتصال
+        ð Ø§ØªØµØ§Ù
 
         </a>
 
@@ -1951,7 +2018,7 @@ async function openOrderDetails(orderId) {
 
         class="customer-btn">
 
-        <i class="fab fa-whatsapp"></i> واتساب
+        <i class="fab fa-whatsapp"></i> ÙØ§ØªØ³Ø§Ø¨
 
         </a>
 
@@ -1960,7 +2027,7 @@ async function openOrderDetails(orderId) {
       <div class="order-section">
 
         <h3 class="order-section-title">
-            🛒 المنتجات (${order.items.length})
+            ð Ø§ÙÙÙØªØ¬Ø§Øª (${order.items.length})
         </h3>
 
         ${itemsHTML}
@@ -1971,7 +2038,7 @@ async function openOrderDetails(orderId) {
 
         <h3 class="order-section-title">
 
-        💰 ملخص الطلب
+        ð° ÙÙØ®Øµ Ø§ÙØ·ÙØ¨
 
         </h3>
 
@@ -1979,35 +2046,35 @@ async function openOrderDetails(orderId) {
 
         <div>
 
-        <span>الإجمالى</span>
+        <span>Ø§ÙØ¥Ø¬ÙØ§ÙÙ</span>
 
-        <b>${order.total} ج.م</b>
-
-        </div>
-
-        <div>
-
-        <span>الشحن</span>
-
-        <b>${order.shipping} ج.م</b>
+        <b>${order.total} Ø¬.Ù</b>
 
         </div>
 
         <div>
 
-        <span>الخصم</span>
+        <span>Ø§ÙØ´Ø­Ù</span>
 
-        <b>${order.discount} ج.م</b>
+        <b>${order.shipping} Ø¬.Ù</b>
 
         </div>
 
         <div>
 
-        <span>طريقة الدفع</span>
+        <span>Ø§ÙØ®ØµÙ</span>
+
+        <b>${order.discount} Ø¬.Ù</b>
+
+        </div>
+
+        <div>
+
+        <span>Ø·Ø±ÙÙØ© Ø§ÙØ¯ÙØ¹</span>
 
         <b>
 
-        ${order.paymentMethod == "cash" ? "الدفع عند الاستلام" : "مدفوع إلكترونياً"}
+        ${order.paymentMethod == "cash" ? "Ø§ÙØ¯ÙØ¹ Ø¹ÙØ¯ Ø§ÙØ§Ø³ØªÙØ§Ù" : "ÙØ¯ÙÙØ¹ Ø¥ÙÙØªØ±ÙÙÙØ§Ù"}
 
         </b>
 
@@ -2015,11 +2082,11 @@ async function openOrderDetails(orderId) {
 
         <div>
 
-        <span>نوع الاستلام</span>
+        <span>ÙÙØ¹ Ø§ÙØ§Ø³ØªÙØ§Ù</span>
 
         <b>
 
-        ${order.shippingType == "pickup" ? "استلام من المتجر" : "شحن"}
+        ${order.shippingType == "pickup" ? "Ø§Ø³ØªÙØ§Ù ÙÙ Ø§ÙÙØªØ¬Ø±" : "Ø´Ø­Ù"}
 
         </b>
 
@@ -2029,13 +2096,13 @@ async function openOrderDetails(orderId) {
 
         <span>
 
-        الإجمالى النهائى
+        Ø§ÙØ¥Ø¬ÙØ§ÙÙ Ø§ÙÙÙØ§Ø¦Ù
 
         </span>
 
         <b>
 
-        ${order.total} ج.م
+        ${order.total} Ø¬.Ù
 
         </b>
 
@@ -2049,7 +2116,7 @@ async function openOrderDetails(orderId) {
 
       <h3>
 
-      سجل الطلب
+      Ø³Ø¬Ù Ø§ÙØ·ÙØ¨
 
       </h3>
 
@@ -2107,7 +2174,7 @@ ordersCards.addEventListener("click", (e) => {
     meskAlert.fire({
       icon: "success",
 
-      title: "تم النسخ",
+      title: "ØªÙ Ø§ÙÙØ³Ø®",
 
       timer: 1000,
 
@@ -2177,7 +2244,7 @@ async function updateOrderStatus(id, status) {
 
     if (!result.success) throw new Error();
 
-    showToast("✅ تم تحديث الحالة");
+    showToast("â ØªÙ ØªØ­Ø¯ÙØ« Ø§ÙØ­Ø§ÙØ©");
   } catch (err) {
     order.status = oldStatus;
 
@@ -2189,7 +2256,7 @@ async function updateOrderStatus(id, status) {
 
     meskAlert.fire({
       icon: "error",
-      title: "فشل تحديث الحالة",
+      title: "ÙØ´Ù ØªØ­Ø¯ÙØ« Ø§ÙØ­Ø§ÙØ©",
     });
   }
 }
@@ -2251,7 +2318,7 @@ async function loadLatestReviews() {
 
         <div class="review-stars">
 
-          ${"⭐".repeat(review.rating)}
+          ${"â­".repeat(review.rating)}
 
         </div>
 
@@ -2313,7 +2380,7 @@ async function deleteSelectedProducts() {
     meskAlert.fire({
       icon: "warning",
 
-      title: "لم تحدد أي منتجات",
+      title: "ÙÙ ØªØ­Ø¯Ø¯ Ø£Ù ÙÙØªØ¬Ø§Øª",
     });
 
     return;
@@ -2322,15 +2389,15 @@ async function deleteSelectedProducts() {
   const result = await meskAlert.fire({
     icon: "warning",
 
-    title: "حذف المنتجات",
+    title: "Ø­Ø°Ù Ø§ÙÙÙØªØ¬Ø§Øª",
 
-    text: `سيتم حذف ${selectedProducts.length} منتج`,
+    text: `Ø³ÙØªÙ Ø­Ø°Ù ${selectedProducts.length} ÙÙØªØ¬`,
 
     showCancelButton: true,
 
-    confirmButtonText: "حذف",
+    confirmButtonText: "Ø­Ø°Ù",
 
-    cancelButtonText: "إلغاء",
+    cancelButtonText: "Ø¥ÙØºØ§Ø¡",
   });
 
   if (!result.isConfirmed) return;
@@ -2351,7 +2418,7 @@ async function deleteSelectedProducts() {
 
   selectedProducts = [];
 
-  document.getElementById("selectedCount").textContent = "0 منتج محدد";
+  document.getElementById("selectedCount").textContent = "0 ÙÙØªØ¬ ÙØ­Ø¯Ø¯";
 
   products = [];
 
@@ -2362,7 +2429,7 @@ async function deleteSelectedProducts() {
   meskAlert.fire({
     icon: "success",
 
-    title: "تم حذف المنتجات",
+    title: "ØªÙ Ø­Ø°Ù Ø§ÙÙÙØªØ¬Ø§Øª",
   });
 }
 
@@ -2376,7 +2443,7 @@ function updateSelectedProducts() {
   ].map((c) => c.value);
 
   document.getElementById("selectedCount").textContent =
-    selectedProducts.length + " منتج محدد";
+    selectedProducts.length + " ÙÙØªØ¬ ÙØ­Ø¯Ø¯";
 }
 
 async function initAdmin() {
@@ -2456,4 +2523,4 @@ document
   .getElementById("productsSort")
   .addEventListener("change", filterAndRenderProducts);
 
-document.addEventListener("DOMContentLoaded", initAdmin);
+document.addEventListener("DOMContentLoaded", function () { if (ADMIN_TOKEN) { initAdmin(); } else { showAdminLogin(); } });
