@@ -1,7 +1,7 @@
 function askAdminPassword() {
   window.location.href = "admin.html";
 }
-// ÙÙÙ Ø§ÙÙÙØ¯ Ø§ÙØ±ÙÙÙØ³Ù app.js
+// ملف الكود الرئيسي app.js
 
 const WEB_APP_URL =
   "https://script.google.com/macros/s/AKfycbyLu7JJfHoSyWbIjO0vwybOyWO1SFU_LTqB-k9T3pY99u3xVZLRGVq-1C8TPB-m7XCPzg/exec";
@@ -58,10 +58,10 @@ const meskAlert = Swal.mixin({
   },
 });
 
-// Ø¥Ø¹Ø¯Ø§Ø¯ ÙØµÙÙÙØ© Ø§ÙØ³ÙØ© ÙØ¹ ØªØ­ÙÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙÙØ®Ø²ÙØ© ÙØ³Ø¨ÙØ§Ù ÙÙ Ø§ÙÙØªØµÙØ­
+// إعداد مصفوفة السلة مع تحميل البيانات المخزنة مسبقاً من المتصفح
 let cart = JSON.parse(localStorage.getItem("mesk_cart")) || [];
 
-// Ø¹ÙØ§ØµØ± ÙØ§Ø¬ÙØ© Ø§ÙÙØ³ØªØ®Ø¯Ù Ø§ÙÙØ³ØªÙØ¯ÙØ©
+// عناصر واجهة المستخدم المستهدفة
 const menuToggleBtn = document.getElementById("menuToggleBtn");
 const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
 const mobileSidebar = document.getElementById("mobileSidebar");
@@ -81,7 +81,7 @@ const searchToggleBtn = document.getElementById("searchToggleBtn");
 const searchBarContainer = document.getElementById("searchBarContainer");
 const searchInput = document.getElementById("searchInput");
 
-// ØªØ­Ø¯ÙØ« Ø§ÙØ³ÙØ© ÙÙØ± ØªØ´ØºÙÙ Ø§ÙØµÙØ­Ø©
+// تحديث السلة فور تشغيل الصفحة
 document.addEventListener("DOMContentLoaded", initApp);
 
 let favorites = [];
@@ -120,11 +120,11 @@ function bindStaticEvents() {
 function normalizeArabic(text = "") {
   return text
     .toLowerCase()
-    .replace(/[Ø£Ø¥Ø¢]/g, "Ø§")
-    .replace(/Ø©/g, "Ù")
-    .replace(/Ù/g, "Ù")
-    .replace(/Ø¤/g, "Ù")
-    .replace(/Ø¦/g, "Ù")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
     .replace(/[\u064B-\u065F]/g, "")
     .trim();
 }
@@ -190,7 +190,7 @@ function renderProducts() {
         product.discount > 0
           ? `
           <div class="discount-badge">
-          Ø®ØµÙ ${product.discount}%
+          خصم ${product.discount}%
           </div>
           `
           : ""
@@ -220,7 +220,7 @@ function renderProducts() {
 
       </h3>
       <div class="product-stock ${product.stock <= 0 ? "out-stock" : ""}">
-        ${product.stock <= 0 ? "ÙÙØ¯ Ø§ÙÙØ®Ø²ÙÙ" : `ÙØªØ¨ÙÙ ${product.stock} ÙØ·Ø¹Ø©`}
+        ${product.stock <= 0 ? "نفد المخزون" : `متبقي ${product.stock} قطعة`}
       </div>
 
       <div class="product-meta">
@@ -231,11 +231,11 @@ function renderProducts() {
           <div class="price-box">
 
               <span class="old-price">
-                  ${product.price} Ø¬.Ù
+                  ${product.price} ج.م
               </span>
 
               <span class="new-price">
-                  ${getFinalPrice(product)} Ø¬.Ù
+                  ${getFinalPrice(product)} ج.م
               </span>
 
           </div>
@@ -244,7 +244,7 @@ function renderProducts() {
           <span
           class="product-price"
           data-price="${product.price}">
-          ${product.price} Ø¬.Ù
+          ${product.price} ج.م
           </span>
           `
       }
@@ -274,7 +274,7 @@ function renderProducts() {
           class="out-stock-btn"
           disabled>
 
-          ØºÙØ± ÙØªÙÙØ±
+          غير متوفر
 
           </button>`
       }
@@ -287,20 +287,20 @@ function renderProducts() {
     `;
   });
 }
-// 1. ÙØ¸Ø§Ù Ø§ÙØ§ÙØªÙØ§Ù Ø¨ÙÙ Ø§ÙØµÙØ­Ø§Øª (SPA Switcher)
+// 1. نظام الانتقال بين الصفحات (SPA Switcher)
 function switchPage(pageId) {
-  // Ø¥Ø®ÙØ§Ø¡ Ø¬ÙÙØ¹ Ø§ÙØµÙØ­Ø§Øª
+  // إخفاء جميع الصفحات
   document.querySelectorAll(".page-view").forEach((view) => {
     view.classList.remove("active");
   });
-  // Ø¥Ø¸ÙØ§Ø± Ø§ÙØµÙØ­Ø© Ø§ÙÙØ³ØªÙØ¯ÙØ©
+  // إظهار الصفحة المستهدفة
   const targetPage = document.getElementById(pageId);
   if (targetPage) {
     targetPage.classList.add("active");
     window.scrollTo(0, 0);
   }
 
-  // ØªØ­Ø¯ÙØ« Ø­Ø§ÙØ© Ø§ÙØ£Ø²Ø±Ø§Ø± Ø§ÙÙØ´Ø·Ø© (Ø§ÙØ±Ø¦ÙØ³ÙØ© ÙØ§ÙÙÙØ¨Ø§ÙÙ)
+  // تحديث حالة الأزرار النشطة (الرئيسية والموبايل)
   document
     .querySelectorAll(".nav-link-btn, .sidebar-link-btn")
     .forEach((btn) => {
@@ -312,18 +312,18 @@ function switchPage(pageId) {
     });
 }
 
-// Ø±Ø¨Ø· Ø£Ø²Ø±Ø§Ø± Ø§ÙÙÙØ¯Ø± ÙØ§ÙÙÙÙÙ Ø§ÙØ¬Ø§ÙØ¨Ù ÙØ§ÙÙÙØªØ± Ø¨ÙØ¸Ø§Ù Ø§ÙØµÙØ­Ø§Øª
+// ربط أزرار الهيدر والمنيو الجانبي والفوتر بنظام الصفحات
 document
   .querySelectorAll(".nav-link-btn, .sidebar-link-btn, .footer-nav-btn")
   .forEach((button) => {
     button.addEventListener("click", (e) => {
       const target = button.getAttribute("data-target");
       switchPage(target);
-      closeMenu(); // Ø¥ØºÙØ§Ù Ø§ÙÙÙÙÙ Ø¥Ø°Ø§ ÙÙØ§ ÙÙ Ø§ÙÙÙØ¨Ø§ÙÙ
+      closeMenu(); // إغلاق المنيو إذا كنا في الموبايل
     });
   });
 
-// 2. ÙØªØ­ ÙØ¥ØºÙØ§Ù Ø§ÙÙÙÙÙ Ø§ÙØ¬Ø§ÙØ¨Ù ÙÙ Ø§ÙÙÙØ¨Ø§ÙÙ
+// 2. فتح وإغلاق المنيو الجانبي في الموبايل
 menuToggleBtn.addEventListener("click", () => {
   mobileSidebar.classList.add("active");
   sidebarOverlay.classList.add("active");
@@ -339,7 +339,7 @@ sidebarOverlay.addEventListener("click", () => {
   cartSidebar.classList.remove("active");
 });
 
-// 3. ÙØªØ­ ÙØ¥ØºÙØ§Ù Ø³ÙØ© Ø§ÙÙØ´ØªØ±ÙØ§Øª
+// 3. فتح وإغلاق سلة المشتريات
 cartToggleBtn.addEventListener("click", () => {
   cartSidebar.classList.add("active");
   sidebarOverlay.classList.add("active");
@@ -349,7 +349,7 @@ cartCloseBtn.addEventListener("click", () => {
   sidebarOverlay.classList.remove("active");
 });
 
-// 4. ØªÙØ¹ÙÙ ÙØ¥ØºÙØ§Ù Ø´Ø±ÙØ· Ø§ÙØ¨Ø­Ø« ÙØ§ÙØ¨Ø­Ø« Ø§ÙÙÙØ±Ù
+// 4. تفعيل وإغلاق شريط البحث والبحث الفوري
 searchToggleBtn.addEventListener("click", () => {
   searchBarContainer.classList.toggle("active");
   if (searchBarContainer.classList.contains("active")) {
@@ -360,7 +360,7 @@ searchToggleBtn.addEventListener("click", () => {
 searchInput.addEventListener("input", (e) => {
   const query = normalizeArabic(e.target.value);
 
-  // ÙÙ ÙØ±Ø¨Ø¹ Ø§ÙØ¨Ø­Ø« ÙØ§Ø¶Ù
+  // لو مربع البحث فاضي
   if (!query) {
     document
       .querySelectorAll("#mainProductsGrid .product-card")
@@ -415,7 +415,7 @@ searchInput.addEventListener("input", (e) => {
   }
 });
 
-// 5. ÙØ¸Ø§Ù Ø§ÙÙÙØªØ±Ø© ÙØ§ÙØªØµÙÙØ© ÙØµÙØ­Ø© Ø§ÙÙÙØªØ¬Ø§Øª
+// 5. نظام الفلترة والتصفية لصفحة المنتجات
 document.querySelectorAll(".filter-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     document
@@ -431,12 +431,12 @@ document.querySelectorAll(".filter-btn").forEach((btn) => {
 function filterProducts(category) {
   const titleElement = document.getElementById("productsPageTitle");
   if (category === "all") {
-    titleElement.textContent = "ÙÙ Ø§ÙÙÙØªØ¬Ø§Øª";
+    titleElement.textContent = "كل المنتجات";
     document
       .querySelectorAll("#mainProductsGrid .product-card")
       .forEach((c) => (c.style.display = "block"));
   } else {
-    titleElement.textContent = `ÙØ³Ù Ø§ÙÙ ${category}`;
+    titleElement.textContent = `قسم الـ ${category}`;
     document
       .querySelectorAll("#mainProductsGrid .product-card")
       .forEach((c) => {
@@ -483,7 +483,7 @@ document.addEventListener("click", (e) => {
   if (product.stock <= 0) {
     Swal.fire({
       icon: "error",
-      title: "ÙÙØ¯ Ø§ÙÙØ®Ø²ÙÙ",
+      title: "نفد المخزون",
     });
     return;
   }
@@ -504,17 +504,17 @@ function addToCart(product) {
   if (currentQtyInCart >= fullProduct.stock) {
     meskAlert.fire({
       icon: "warning",
-      title: "ÙØµÙØª ÙÙØ­Ø¯ Ø§ÙØ£ÙØµÙ ÙÙ Ø§ÙÙØ®Ø²ÙÙ",
+      title: "وصلت للحد الأقصى من المخزون",
     });
 
     return;
   }
-  // Ø§ÙØªØ­ÙÙ ÙÙ ÙØ¬ÙØ¯ Ø§ÙÙÙØªØ¬ ÙØ³Ø¨ÙØ§Ù ÙØ²ÙØ§Ø¯Ø© Ø§ÙÙÙÙØ©
+  // التحقق من وجود المنتج مسبقاً لزيادة الكمية
   const existingItem = cart.find((item) => item.id === product.id);
   if (existingItem) {
     existingItem.qty += 1;
 
-    // ÙØ­Ø¯Ø« Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙÙØ¯ÙÙØ© Ø§ÙÙÙØ¬ÙØ¯Ø© ÙÙ Ø§ÙØ³ÙØ©
+    // يحدث البيانات القديمة الموجودة فى السلة
     existingItem.imageUrl = product.imageUrl;
     existingItem.name = product.name;
     existingItem.price = product.price;
@@ -534,22 +534,22 @@ function addToCart(product) {
 function saveAndRefreshCart() {
   localStorage.setItem("mesk_cart", JSON.stringify(cart));
   updateCartUI();
-  showToast(" ØªÙØª Ø§Ø¶Ø§ÙØªÙ ÙÙØ³ÙØ©");
+  showToast(" تمت اضافته للسلة");
 }
 
 function updateCartUI() {
-  // Ø­Ø³Ø§Ø¨ Ø¥Ø¬ÙØ§ÙÙ Ø¹Ø¯Ø¯ Ø§ÙÙØ·Ø¹ Ø¨Ø§ÙØ³ÙØ©
+  // حساب إجمالي عدد القطع بالسلة
   const totalItemsCount = cart.reduce((acc, item) => acc + item.qty, 0);
   cartCount.textContent = totalItemsCount;
 
-  // ØªØ£Ø«ÙØ± Ø§ÙØ­Ø±ÙØ© ÙØ¹Ø¯Ø§Ø¯ Ø§ÙØ³ÙØ©
+  // تأثير الحركة لعداد السلة
   cartCount.classList.add("bump");
   setTimeout(() => cartCount.classList.remove("bump"), 300);
 
   if (cart.length === 0) {
     cartItemsList.innerHTML =
-      '<p class="empty-cart-msg">Ø§ÙØ³ÙØ© ÙØ§Ø±ØºØ© Ø­Ø§ÙÙØ§Ù</p>';
-    cartTotalAmount.textContent = "0 Ø¬.Ù";
+      '<p class="empty-cart-msg">السلة فارغة حالياً</p>';
+    cartTotalAmount.textContent = "0 ج.م";
     return;
   }
 
@@ -578,7 +578,7 @@ function updateCartUI() {
                   ${
                     item.outOfStock
                       ? `<div class="out-stock-label">
-                          ÙÙØ¯ Ø§ÙÙØ®Ø²ÙÙ
+                          نفد المخزون
                         </div>`
                       : ""
                   }
@@ -586,7 +586,7 @@ function updateCartUI() {
               </div>
 
               <div class="cart-item-price">
-                  ${item.price} Ø¬.Ù
+                  ${item.price} ج.م
               </div>
 
               <div class="cart-qty-controls">
@@ -595,7 +595,7 @@ function updateCartUI() {
                     item.outOfStock
                       ? `
                       <span class="stock-ended">
-                          ØºÙØ± ÙØªÙÙØ± Ø­Ø§ÙÙØ§Ù
+                          غير متوفر حالياً
                       </span>
                       `
                       : `
@@ -634,10 +634,10 @@ function updateCartUI() {
     cartItemsList.insertAdjacentHTML("beforeend", itemHTML);
   });
 
-  cartTotalAmount.textContent = `${total} Ø¬.Ù`;
+  cartTotalAmount.textContent = `${total} ج.م`;
 }
 
-// ØªØºÙÙØ± Ø§ÙÙÙÙØ© Ø¨Ø§ÙØ²ÙØ§Ø¯Ø© ÙØ§ÙÙÙØµØ§Ù
+// تغيير الكمية بالزيادة والنقصان
 window.changeQty = function (id, change) {
   const item = cart.find((item) => String(item.id) === String(id));
 
@@ -650,7 +650,7 @@ window.changeQty = function (id, change) {
   if (change > 0 && item.qty >= fullProduct.stock) {
     Swal.fire({
       icon: "warning",
-      title: "ÙØ§ ÙÙØ¬Ø¯ ÙØ®Ø²ÙÙ Ø¥Ø¶Ø§ÙÙ",
+      title: "لا يوجد مخزون إضافي",
     });
 
     return;
@@ -665,13 +665,13 @@ window.changeQty = function (id, change) {
   saveAndRefreshCart();
 };
 
-// Ø­Ø°Ù ÙÙØªØ¬ Ø¨Ø§ÙÙØ§ÙÙ ÙÙ Ø§ÙØ³ÙØ©
+// حذف منتج بالكامل من السلة
 window.removeFromCart = function (id) {
   cart = cart.filter((item) => String(item.id) !== String(id));
 
   saveAndRefreshCart();
 };
-// Ø¥Ø¸ÙØ§Ø± Ø§ÙØªÙØ¨ÙÙØ§Øª Ø§ÙØ°ÙÙØ©
+// إظهار التنبيهات الذكية
 
 document.getElementById("closeCustomerModal").addEventListener("click", () => {
   customerModal.classList.remove("active");
@@ -684,7 +684,7 @@ customerModal.addEventListener("click", (e) => {
 });
 checkoutBtn.addEventListener("click", () => {
   if (cart.length === 0) {
-    showToast("Ø§ÙØ³ÙØ© ÙØ§Ø±ØºØ©");
+    showToast("السلة فارغة");
 
     return;
   }
@@ -693,28 +693,28 @@ checkoutBtn.addEventListener("click", () => {
   window.location.href = "checkout.html";
 });
 
-// 8. Ø§ÙØªØ¹Ø§ÙÙ ÙØ¹ ÙÙØ±ÙØ© "ØªÙØ§ØµÙ ÙØ¹ÙØ§" ÙØªÙØ¬ÙÙ Ø§ÙØ§Ø³ØªÙØ³Ø§Ø± ÙÙÙØ§ØªØ³Ø§Ø¨
+// 8. التعامل مع فورمة "تواصل معنا" وتوجيه الاستفسار للواتساب
 document.getElementById("contactForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const name = document.getElementById("contactName").value;
   const phone = document.getElementById("contactPhone").value;
   const msg = document.getElementById("contactMessage").value;
 
-  let contactMsg = `ÙØ±Ø­Ø¨Ø§Ù ÙØªØ¬Ø± ÙØ³Ù ÙÙØªØ±Ø§Ø«Ø ÙØ¯Ù Ø§Ø³ØªÙØ³Ø§Ø± Ø¬Ø¯ÙØ¯:\n\n`;
-  contactMsg += `ð¤ *Ø§ÙØ§Ø³Ù:* ${name}\n`;
-  contactMsg += `ð *Ø±ÙÙ Ø§ÙØªÙØ§ØµÙ:* ${phone}\n`;
-  contactMsg += `âï¸ *Ø§ÙØ±Ø³Ø§ÙØ©:* ${msg}`;
+  let contactMsg = `مرحباً متجر مسك للتراث، لدي استفسار جديد:\n\n`;
+  contactMsg += `👤 *الاسم:* ${name}\n`;
+  contactMsg += `📞 *رقم التواصل:* ${phone}\n`;
+  contactMsg += `✉️ *الرسالة:* ${msg}`;
 
   const encodedContactMsg = encodeURIComponent(contactMsg);
   window.open(`https://wa.me/201007569287?text=${encodedContactMsg}`, "_blank");
 
-  // ØªØµÙÙØ± Ø§ÙÙÙØ±ÙØ© Ø¨Ø¹Ø¯ Ø§ÙØ¥Ø±Ø³Ø§Ù
+  // تصفير الفورمة بعد الإرسال
   document.getElementById("contactForm").reset();
-  showToast("ØªÙ ØªØ­ÙÙÙ Ø±Ø³Ø§ÙØªÙ Ø¥ÙÙ Ø§ÙÙØ§ØªØ³Ø§Ø¨ Ø¨ÙØ¬Ø§Ø­!");
+  showToast("تم تحويل رسالتك إلى الواتساب بنجاح!");
 });
 
-// --- ÙÙØ¯ Ø¨ÙØ§Ø¡ Ø³Ø¨Ø­Ø© Ø§ÙÙÙØ¬Ù Ø§ÙØ¯ÙÙØ§ÙÙÙÙØ© ÙØ¹ Ø§ÙØ´Ø±Ø§Ø¨Ø© Ø§ÙÙØªØ­Ø±ÙØ© ---
-// --- ÙÙØ¯ Ø¨ÙØ§Ø¡ ÙØªØ¯ÙÙØ± Ø§ÙØ³Ø¨Ø­Ø© ÙØ§ÙØ´Ø±Ø§Ø¨Ø© Ø¯ÙÙØ§ÙÙÙÙØ§Ù Ø¨Ø£Ø¹ÙÙ Ø¯ÙØ© ÙÙØ¯Ø³ÙØ© ---
+// --- كود بناء سبحة اللوجو الديناميكية مع الشرابة المتحركة ---
+// --- كود بناء وتدوير السبحة والشرابة ديناميكياً بأعلى دقة هندسية ---
 let tasselAnimationId = null;
 
 function buildTasbihRing() {
@@ -730,7 +730,7 @@ function buildTasbihRing() {
   const radius = containerWidth / 2 - 6;
   const center = containerWidth / 2;
 
-  // 1. Ø¨ÙØ§Ø¡ Ø§ÙØ®Ø±Ø² ÙÙ Ø£ÙØ§ÙÙÙ Ø§ÙØ«Ø§Ø¨ØªØ© Ø¯Ø§Ø®Ù Ø§ÙÙ Ø§ÙÙ Ring
+  // 1. بناء الخرز في أماكنه الثابتة داخل الـ الـ Ring
   for (let i = 0; i < beadsCount; i++) {
     const bead = document.createElement("div");
     bead.className = "bead";
@@ -744,13 +744,13 @@ function buildTasbihRing() {
 
     ring.appendChild(bead);
 
-    // Ø®Ø±Ø² Ø§ÙÙÙØ§ØµÙ
+    // خرز الفواصل
     if (i % 11 === 0) {
       bead.style.background =
         "radial-gradient(circle at 35% 35%, #fff, #c5a880, #8a6f43)";
     }
 
-    // ØªÙÙÙØ² Ø§ÙØ®Ø±Ø²Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ© (Ø±ÙÙ 0) Ø§ÙÙÙ ÙÙÙØ­ÙÙØ§ Ø§ÙØ¯ÙØ§ÙØ©
+    // تمييز الخرزة الرئيسية (رقم 0) اللي هيلحقها الدلاية
     if (i === 0) {
       bead.style.background =
         "radial-gradient(circle at 35% 35%, #fff, #ebd4b2, #a68453)";
@@ -759,26 +759,26 @@ function buildTasbihRing() {
     }
   }
 
-  // 2. ØªØ­Ø±ÙÙ Ø§ÙØ´Ø±Ø§Ø¨Ø© Ø¯ÙÙØ§ÙÙÙÙØ§Ù ÙØ¹ Ø¯ÙØ±Ø§Ù Ø§ÙÙ CSS (Ø§ÙÙØ­Ø§ÙØ§Ø© Ø§ÙÙÙØ²ÙØ§Ø¦ÙØ© Ø§ÙÙØ®ÙØ©)
+  // 2. تحريك الشرابة ديناميكياً مع دوران الـ CSS (المحاكاة الفيزيائية الفخمة)
   if (tassel) {
-    // ÙÙØª Ø¨Ø¯Ø§ÙØ© Ø§ÙØ£ÙÙÙÙØ´Ù ÙØ±Ø¨Ø·Ù Ø¨Ø§ÙÙ CSS (Ø§ÙØ³Ø¨Ø­Ø© Ø¨ØªÙÙ ÙÙØ© ÙØ§ÙÙØ© ÙÙ 25 Ø«Ø§ÙÙØ© Ø¨ÙØ§Ø¡ Ø¹ÙÙ Ø§ÙÙ CSS)
+    // وقت بداية الأنيميشن لربطه بالـ CSS (السبحة بتلف لفة كاملة كل 25 ثانية بناء على الـ CSS)
     const startTime = performance.now();
-    const duration = 25000; // 25 Ø«Ø§ÙÙØ© ÙÙØªÙØ¨Ø© ÙÙ Ø§ÙÙ CSS (animation: spin 25s)
+    const duration = 25000; // 25 ثانية مكتوبة في الـ CSS (animation: spin 25s)
 
     function updateTasselPosition(currentTime) {
       const elapsedTime = currentTime - startTime;
 
-      // Ø­Ø³Ø§Ø¨ ÙØ³Ø¨Ø© Ø§ÙØ¯ÙØ±Ø§Ù Ø§ÙØ­Ø§ÙÙØ© (ÙÙ 0 ÙÙ 1)
+      // حساب نسبة الدوران الحالية (من 0 لـ 1)
       const progress = (elapsedTime % duration) / duration;
 
-      // ØªØ­ÙÙÙ Ø§ÙÙØ³Ø¨Ø© ÙØ²Ø§ÙÙØ© Ø¨Ø§ÙØ±Ø§Ø¯ÙØ§Ù (ÙØ¹ Ø¥Ø¶Ø§ÙØ© Math.PI / 2 ÙØªØ¨Ø¯Ø£ Ø§ÙØ´Ø±Ø§Ø¨Ø© ÙÙ Ø§ÙØ£Ø³ÙÙ ØªÙØ§ÙØ§Ù ØªØ²Ø§ÙÙØ§Ù ÙØ¹ Ø§ÙØ®Ø±Ø²Ø© 0)
+      // تحويل النسبة لزاوية بالراديان (مع إضافة Math.PI / 2 لتبدأ الشرابة من الأسفل تماماً تزامناً مع الخرزة 0)
       const currentAngle = progress * Math.PI * 2 + 0 * Math.PI * 2;
 
-      // Ø­Ø³Ø§Ø¨ Ø§ÙØ¥Ø­Ø¯Ø§Ø«ÙØ§Øª Ø§ÙØ¯ÙÙØ§ÙÙÙÙØ© ÙÙÙÙØ¹ Ø§ÙØ®Ø±Ø²Ø© Ø±ÙÙ 0 Ø£Ø«ÙØ§Ø¡ Ø¯ÙØ±Ø§ÙÙØ§
+      // حساب الإحداثيات الديناميكية لموقع الخرزة رقم 0 أثناء دورانها
       const tasselX = Math.cos(currentAngle) * radius + center;
       const tasselY = Math.sin(currentAngle) * radius + center;
 
-      // ÙÙÙ Ø§ÙØ´Ø±Ø§Ø¨Ø© ÙÙÙÙØ§Ù Ø§ÙØ¬Ø¯ÙØ¯ ÙØ¹ Ø§ÙØ­ÙØ§Ø¸ Ø¹ÙÙ Ø§ÙÙ transform Ø§ÙÙ Ø®Ø§Øµ Ø¨Ø§ÙÙ Swing ÙÙ Ø§ÙÙ CSS
+      // نقل الشرابة للمكان الجديد مع الحفاظ على الـ transform الـ خاص بالـ Swing من الـ CSS
       tassel.style.left = `${tasselX}px`;
       tassel.style.top = `${tasselY}px`;
 
@@ -810,7 +810,7 @@ async function loadUnreadNotifications() {
   }
 }
 
-// ØªØ´ØºÙÙ ÙØªØ­Ø¯ÙØ« Ø§ÙØ¯Ø§ÙØ© ÙÙØ±Ø§Ù ÙØ¹ÙØ¯ ØªØºÙÙØ± Ø­Ø¬Ù Ø§ÙØ´Ø§Ø´Ø©
+// تشغيل وتحديث الدالة فوراً وعند تغيير حجم الشاشة
 
 window.addEventListener("resize", buildTasbihRing);
 buildTasbihRing();
@@ -935,8 +935,8 @@ function validateCartStock() {
 
     Swal.fire({
       icon: "info",
-      title: "ØªÙ ØªØ­Ø¯ÙØ« Ø§ÙØ³ÙØ©",
-      text: "ØªÙ ØªØ¹Ø¯ÙÙ Ø§ÙÙÙÙØ§Øª Ø­Ø³Ø¨ Ø§ÙÙØ®Ø²ÙÙ Ø§ÙÙØªØ§Ø­",
+      title: "تم تحديث السلة",
+      text: "تم تعديل الكميات حسب المخزون المتاح",
       confirmButtonColor: "#1c3d27",
     });
   }
@@ -956,22 +956,22 @@ document.getElementById("sendOrderBtn").addEventListener("click", () => {
   if (!customerName || !customerPhone || !customerAddress) {
     meskAlert.fire({
       icon: "warning",
-      title: "Ø£ÙÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª",
-      text: "ÙØ±Ø¬Ù ØªØ¹Ø¨ÙÙØ© Ø¬ÙÙØ¹ Ø§ÙØ­ÙÙÙ",
+      title: "أكمل البيانات",
+      text: "يرجى تعبئة جميع الحقول",
     });
 
     return;
   }
 
   let messageText =
-    `Ø§ÙØ§Ø³Ù : ${customerName}\n` +
-    `Ø§ÙÙØ§ØªÙ : ${customerPhone}\n` +
-    `Ø§ÙÙØ­Ø§ÙØ¸Ø© : ${customerCity}\n` +
-    `Ø§ÙØ¹ÙÙØ§Ù : ${customerAddress}\n\n`;
+    `الاسم : ${customerName}\n` +
+    `الهاتف : ${customerPhone}\n` +
+    `المحافظة : ${customerCity}\n` +
+    `العنوان : ${customerAddress}\n\n`;
 
   messageText += "--------------------\n";
 
-  messageText += "Ø§ÙØ·ÙØ¨Ø§Øª:\n\n";
+  messageText += "الطلبات:\n\n";
 
   let total = 0;
 
@@ -980,13 +980,13 @@ document.getElementById("sendOrderBtn").addEventListener("click", () => {
 
     messageText +=
       `${index + 1}. ${item.name}\n` +
-      `Ø§ÙÙÙÙØ© : ${item.qty}\n` +
-      `Ø§ÙØ³Ø¹Ø± : ${item.price}\n\n`;
+      `الكمية : ${item.qty}\n` +
+      `السعر : ${item.price}\n\n`;
 
     total += subTotal;
   });
 
-  messageText += `\nØ§ÙØ¥Ø¬ÙØ§ÙÙ : ${total} Ø¬.Ù`;
+  messageText += `\nالإجمالي : ${total} ج.م`;
 
   window.open(
     `https://wa.me/201007569287?text=${encodeURIComponent(messageText)}`,
@@ -1085,7 +1085,7 @@ async function renderCategories() {
 
   if (filterContainer) {
     filterContainer.innerHTML = `
-      <button class="filter-btn active" data-filter="all">Ø§ÙÙÙ</button>
+      <button class="filter-btn active" data-filter="all">الكل</button>
       ${categories
         .map(
           (cat) => `
@@ -1179,7 +1179,7 @@ async function loginCustomer() {
   if (!phone || !password) {
     Swal.fire({
       icon: "warning",
-      title: "Ø£ÙÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª",
+      title: "أكمل البيانات",
     });
 
     return;
@@ -1205,13 +1205,13 @@ async function loginCustomer() {
 
   console.log(result);
 
-  // Ø£ÙÙ Ø¯Ø®ÙÙ (ÙØ§ ØªÙØ¬Ø¯ ÙÙÙØ© ÙØ±ÙØ±)
+  // أول دخول (لا توجد كلمة مرور)
   if (result.needPassword) {
     loginModal.classList.remove("show");
 
     document.getElementById("createPasswordModal").classList.add("show");
 
-    // ÙØ®Ø²Ù Ø±ÙÙ Ø§ÙÙØ§ØªÙ Ø¹Ø´Ø§Ù ÙØ³ØªØ®Ø¯ÙÙ ÙÙ Ø¥ÙØ´Ø§Ø¡ ÙÙÙØ© Ø§ÙÙØ±ÙØ±
+    // نخزن رقم الهاتف عشان نستخدمه فى إنشاء كلمة المرور
     localStorage.setItem("tempPhone", phone);
 
     return;
@@ -1240,7 +1240,7 @@ async function loginCustomer() {
   Swal.fire({
     icon: "success",
 
-    title: "ØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ",
+    title: "تم تسجيل الدخول",
   });
 }
 document.getElementById("loginBtn").onclick = loginCustomer;
@@ -1275,7 +1275,7 @@ async function registerCustomer() {
     Swal.fire({
       icon: "warning",
 
-      title: "Ø£ÙÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª",
+      title: "أكمل البيانات",
     });
 
     return;
@@ -1285,7 +1285,7 @@ async function registerCustomer() {
     Swal.fire({
       icon: "error",
 
-      title: "ÙÙÙØªØ§ Ø§ÙÙØ±ÙØ± ØºÙØ± ÙØªØ·Ø§Ø¨ÙØªÙÙ",
+      title: "كلمتا المرور غير متطابقتين",
     });
 
     return;
@@ -1340,7 +1340,7 @@ async function registerCustomer() {
   Swal.fire({
     icon: "success",
 
-    title: "ØªÙ Ø¥ÙØ´Ø§Ø¡ Ø§ÙØ­Ø³Ø§Ø¨",
+    title: "تم إنشاء الحساب",
   }).then(() => {
     location.href = "account.html";
   });
@@ -1361,7 +1361,7 @@ savePasswordBtn.onclick = async () => {
     Swal.fire({
       icon: "error",
 
-      text: "ÙÙÙØªØ§ Ø§ÙÙØ±ÙØ± ØºÙØ± ÙØªØ·Ø§Ø¨ÙØªÙÙ",
+      text: "كلمتا المرور غير متطابقتين",
     });
 
     return;
@@ -1370,7 +1370,7 @@ savePasswordBtn.onclick = async () => {
   if (newPassword.value.length < 6) {
     Swal.fire({
       icon: "warning",
-      text: "ÙÙÙØ© Ø§ÙÙØ±ÙØ± ÙØ¬Ø¨ Ø£ÙØ§ ØªÙÙ Ø¹Ù 6 Ø£Ø­Ø±Ù",
+      text: "كلمة المرور يجب ألا تقل عن 6 أحرف",
     });
 
     return;
@@ -1407,8 +1407,8 @@ savePasswordBtn.onclick = async () => {
   } else {
     Swal.fire({
       icon: "info",
-      title: "ØªÙØ¹ÙÙ Ø§ÙØ­Ø³Ø§Ø¨ ÙØªÙÙÙ ÙØ¤ÙØªØ§Ù",
-      text: "ÙØªÙØ¹ÙÙ Ø­Ø³Ø§Ø¨Ù Ø§ÙØ­Ø§ÙÙ ØªÙØ§ØµÙ ÙØ¹ÙØ§ ÙØ³ÙÙØ¹ÙÙÙ ÙÙ ÙÙØ±Ø§Ù",
+      title: "تفعيل الحساب متوقف مؤقتاً",
+      text: "لتفعيل حسابك الحالي تواصل معنا وسنفعّله لك فوراً",
     });
   }
 };
@@ -1429,4 +1429,4 @@ async function initApp() {
   } catch (err) {
     console.error(err);
   }
-      }
+}
