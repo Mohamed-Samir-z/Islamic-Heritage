@@ -321,60 +321,29 @@ function doGet(e) {
   }
 
   if(action === "getCustomerByPhone"){
-
     const phone = normalizePhone(e.parameter.phone);
-
     const sheet =
       SpreadsheetApp
         .getActiveSpreadsheet()
         .getSheetByName(CUSTOMERS_SHEET);
-
     const rows =
-      sheet.getDataRange().getValues();
-
+        sheet.getDataRange().getValues();
     for(let i=1;i<rows.length;i++){
-
       if(normalizePhone(rows[i][2])===phone){
-
         return ContentService
           .createTextOutput(JSON.stringify({
-
-            exists:true,
-
-            customer:{
-
-              id:rows[i][0],
-
-              name:rows[i][1],
-
-              phone:rows[i][2],
-
-              email:rows[i][5],
-
-              address:rows[i][6],
-
-              landmark:rows[i][7],
-
-              city:rows[i][8]
-
-            }
-
+            exists:true
           }))
           .setMimeType(ContentService.MimeType.JSON);
-
       }
-
     }
-
     return ContentService
         .createTextOutput(JSON.stringify({
-
           exists:false
-
         }))
         .setMimeType(ContentService.MimeType.JSON);
-
   }
+
 
   if(action === "getCustomerOrders"){
 
@@ -1650,13 +1619,12 @@ function doPost(e) {
 
         customerId = customer.id;
 
-        customersSheet.getRange(customer.row,2).setValue(data.customerName);
-
-        customersSheet.getRange(customer.row,7).setValue(data.address);
-
-        customersSheet.getRange(customer.row,8).setValue(data.landmark || "");
-
-        customersSheet.getRange(customer.row,9).setValue(data.city);
+        if (!coGuest_) {
+          customersSheet.getRange(customer.row,2).setValue(data.customerName);
+          customersSheet.getRange(customer.row,7).setValue(data.address);
+          customersSheet.getRange(customer.row,8).setValue(data.landmark || "");
+          customersSheet.getRange(customer.row,9).setValue(data.city);
+        }
 
       }else{
 
