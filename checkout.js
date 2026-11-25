@@ -33,6 +33,13 @@
 })();
 // ===== end customer session layer =====
 let checkoutCart = [];
+let appliedCoupon = null;
+
+function effPrice(item) {
+    const p = Number(item.price) || 0;
+    const d = Number(item.discount) || 0;
+    return d ? Math.round(p - (p * d) / 100) : p;
+}
 document.addEventListener("DOMContentLoaded", () => {
    checkoutCart = JSON.parse(localStorage.getItem("mesk_cart")) || [];
 
@@ -262,7 +269,7 @@ function renderCheckout() {
 
     checkoutCart.forEach((item) => {
         const qty = Number(item.qty) || 0;
-        const price = Number(item.price) || 0;
+        const price = effPrice(item);
       subtotal += price * qty;
 
         checkoutItems.innerHTML += `
@@ -276,11 +283,44 @@ function renderCheckout() {
         `;
     });
 
+    const appliedDiscount = appliedCoupon ? appliedCoupon.discount : 0;
     subtotalPrice.textContent = subtotal + " ج.م";
-    discountPrice.textContent = "0 ج.م";
+    discountPrice.textContent = appliedDiscount + " ج.م";
     shippingPrice.textContent = "0 ج.م";
-    totalPrice.textContent = subtotal + " ج.م";
+    totalPrice.textContent = (subtotal - appliedDiscount) + " ج.م";
 }
+
+    const couponInput = document.getElementById("couponCode");
+    const applyCouponBtn = document.getElementById("applyCouponBtn");
+    if (applyCouponBtn && couponInput) {
+        applyCouponBtn.addEventListener("click", async () => {
+            const code = couponInput.value.trim();
+            if (!code) return;
+            applyCouponBtn.disabled = true;
+            try {
+                const subtotal = checkoutCart.reduce((sum, item) => sum + effPrice(item) * (Number(item.qty) || 0), 0);
+                const r = await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ action: "validateCoupon", code, subTotal: subtotal }),
+                });
+                const j = await r.json();
+                if (j && j.valid) {
+                    appliedCoupon = { code, discount: Number(j.discount) || 0 };
+                    renderCheckout();
+                    Swal.fire({ icon: "success", title: "تم تطبيق الكوبون", text: "خصم " + appliedCoupon.discount + " ج.م" });
+                } else {
+                    appliedCoupon = null;
+                    renderCheckout();
+                    Swal.fire({ icon: "error", title: (j && j.message) || "الكوبون غير صالح" });
+                }
+            } catch (couponErr) {
+                Swal.fire({ icon: "error", title: "تعذر التحقق من الكوبون" });
+            } finally {
+                applyCouponBtn.disabled = false;
+            }
+        });
+    }
 
     renderCheckout();
     const confirmOrderBtn = document.getElementById("confirmOrderBtn");
@@ -301,8 +341,6 @@ function fillAddress(address) {
 }
 
 async function submitOrder() {
-    alert("دخلت الدالة");
-
     console.log("Submit Order");
     const customerName = document.getElementById("customerName").value.trim();
 
@@ -370,10 +408,10 @@ async function submitOrder() {
     let subTotal = 0;
 
     checkoutCart.forEach((item) => {
-      subTotal += Number(item.price) * Number(item.qty);
+      subTotal += effPrice(item) * (Number(item.qty) || 0);
     });
 
-    const discount = 0;
+    const discount = appliedCoupon ? appliedCoupon.discount : 0;
 
     const shipping = 0;
 
@@ -381,6 +419,8 @@ async function submitOrder() {
 
     const orderData = {
         action: "createOrder",
+
+        coupon: appliedCoupon ? appliedCoupon.code : "",
 
         customerName,
 
@@ -423,6 +463,15 @@ async function submitOrder() {
 
     const result = await response.json();
 
+    if (!result || result.success === false || result.error || !result.orderId) {
+        return Swal.fire({
+            icon: "error",
+            title: "تعذر إنشاء الطلب",
+            text: (result && (result.message || result.error)) || "حاول مرة أخرى",
+        });
+    }
+
+    if (localStorage.getItem("mesk_token")) {
     localStorage.setItem("mesk_customer",
         JSON.stringify({
             id: result.customerId,
@@ -430,6 +479,7 @@ async function submitOrder() {
             name: customerName
         })
     );
+    }
 
     console.log(result);
 
@@ -441,35 +491,42 @@ async function submitOrder() {
         text: "رقم الطلب : " + result.orderId,
     });
 
-    await fetch(WEB_APP_URL, {
-        method: "POST",
+    try {
+        const checkoutCustomer = JSON.parse(localStorage.getItem("mesk_customer"));
+        if (checkoutCustomer && checkoutCustomer.id && typeof defaultAddressId !== "undefined" && defaultAddressId) {
+            await fetch(WEB_APP_URL, {
+                method: "POST",
 
-        headers: {
-            "Content-Type": "text/plain",
-        },
+                headers: {
+                    "Content-Type": "text/plain",
+                },
 
-        body: JSON.stringify({
-            action: "updateAddress",
+                body: JSON.stringify({
+                    action: "updateAddress",
 
-            id: defaultAddressId,
+                    id: defaultAddressId,
 
-            customerId: customer.id,
+                    customerId: checkoutCustomer.id,
 
-            title: "المنزل",
+                    title: "المنزل",
 
-            receiverName: customerName,
+                    receiverName: customerName,
 
-            phone: customerPhone,
+                    phone: customerPhone,
 
-            city: customerCity,
+                    city: customerCity,
 
-            address: customerAddress,
+                    address: customerAddress,
 
-            landmark: customerLandmark,
+                    landmark: customerLandmark,
 
-            isDefault: true,
-        }),
-    });
+                    isDefault: true,
+                }),
+            });
+        }
+    } catch (addrErr) {
+        console.error(addrErr);
+    }
 
     localStorage.removeItem("mesk_cart");
     console.log({
