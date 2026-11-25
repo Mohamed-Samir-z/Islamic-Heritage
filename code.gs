@@ -20,9 +20,9 @@ function generateSalt(){
 }
 
 // ===== Security layer v71 (2026-11-25): admin auth, customer sessions, ownership enforcement =====
-var ADMIN_GET_ACTIONS = {getStats:1, getLatestReviews:1, getOrders:1, getOrderLogs:1, getCoupons:1, getCustomers:1};
+var ADMIN_GET_ACTIONS = {getStats:1, getLatestReviews:1, getOrders:1, getOrderLogs:1, getCoupons:1, getCustomers:1, getCustomerByPhone:1};
 var ADMIN_POST_ACTIONS = {saveBanner:1, addCategory:1, updateCategory:1, deleteCategory:1, updatePaymentStatus:1, updateOrderStatus:1, deleteOrder:1, saveCoupon:1, deleteCoupon:1, toggleCoupon:1, add:1, update:1, deleteMultiple:1, delete:1, uploadImage:1, adminResetCustomerPassword:1, deleteCustomer:1};
-var CUST_GET_ACTIONS = {getCustomerByPhone:1, getCustomerOrders:1, getAddresses:1, getDefaultAddress:1, getWishlist:1, getFavorites:1, getNotifications:1, getUnreadNotifications:1};
+var CUST_GET_ACTIONS = {getCustomerOrders:1, getAddresses:1, getDefaultAddress:1, getWishlist:1, getFavorites:1, getNotifications:1, getUnreadNotifications:1};
 var CUST_POST_ACTIONS = {saveAddress:1, updateAddress:1, deleteAddress:1, setDefaultAddress:1, changePassword:1, updateCustomerProfile:1, addFavorite:1, removeFavorite:1, markNotificationsRead:1};
 var SESSIONS_SHEET_NAME = "Sessions";
 function sha256Hex_(s){var b=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(s),Utilities.Charset.UTF_8);for(var i=0;i<b.length;i++){var v=(b[i]<0?b[i]+256:b[i]).toString(16);b[i]=v.length==1?"0"+v:v}return b.join("")}
@@ -1334,43 +1334,36 @@ function doPost(e) {
       if (!ocOwn) { output.setContent(JSON.stringify({success:false,error:"unauthorized"})); return output; }
     }
     if(action === "addReview"){
-
-      const reviewsSheet =
-        SpreadsheetApp
-        .getActiveSpreadsheet()
-        .getSheetByName(REVIEWS_SHEET);
-
-      if(
-        !data.productId ||
-        !data.name ||
-        !data.rating ||
-        !data.comment
-      ){
-        throw new Error("Missing review data");
-      }
-
+      if (rlCheck_("review_global",10)) { output.setContent(JSON.stringify({success:false, message:"عدد التقييمات كبير، حاول لاحقاً"})); return output; }
+      const rvName = String(data.name||"").trim().slice(0,60);
+      const rvComment = String(data.comment||"").trim().slice(0,500);
+      const rvRating = Math.max(1, Math.min(5, parseInt(data.rating,10) || 0));
+      const rvPid = String(data.productId||"").trim();
+      if(!rvPid || !rvName || !rvComment || !rvRating){ output.setContent(JSON.stringify({success:false, message:"بيانات التقييم غير مكتملة"})); return output; }
+      const pRows = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(PRODUCTS_SHEET).getDataRange().getValues();
+      let rvExists = false;
+      for (let rpi=1; rpi<pRows.length; rpi++){ if (String(pRows[rpi][0]) === rvPid) { rvExists = true; break; } }
+      if (!rvExists) { output.setContent(JSON.stringify({success:false, message:"المنتج غير موجود"})); return output; }
+      const rvKey = "review_" + sha256Hex_(rvPid + "|" + rvName.toLowerCase() + "|" + rvComment);
+      if (rlCheck_(rvKey,1)) { output.setContent(JSON.stringify({success:false, message:"تم إرسال هذا التقييم بالفعل"})); return output; }
+      const reviewsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(REVIEWS_SHEET);
       reviewsSheet.appendRow([
-
         Date.now(),
-
-        data.productId,
-
-        data.name,
-
-        data.rating,
-
-        data.comment,
-
+        rvPid,
+        rvName,
+        rvRating,
+        rvComment,
         Utilities.formatDate(
           new Date(),
           Session.getScriptTimeZone(),
           "yyyy-MM-dd HH:mm:ss"
         )
-
       ]);
-
+      rlHit_("review_global",3600);
+      rlHit_(rvKey,86400);
+      output.setContent(JSON.stringify({success:true}));
+      return output;
     }
-
     if (action === "saveBanner") {
       const bannersSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(BANNERS_SHEET);
       const rows = bannersSheet.getDataRange().getValues();
