@@ -2453,6 +2453,12 @@ async function initAdmin() {
     await loadLatestReviews();
     await loadOrders();
     initDashboardAccordion();
+    await loadCoupons();
+    await loadCustomers();
+    var acb = document.getElementById("addCouponBtn");
+    if (acb) acb.onclick = saveCouponAdmin;
+    var csearch = document.getElementById("customersSearch");
+    if (csearch) csearch.oninput = renderCustomers;
 }
 
 function filterAndRenderProducts() {
@@ -2524,3 +2530,103 @@ document
   .addEventListener("change", filterAndRenderProducts);
 
 document.addEventListener("DOMContentLoaded", function () { if (ADMIN_TOKEN) { initAdmin(); } else { showAdminLogin(); } });
+
+
+// ===== Coupons management (v78) =====
+let adminCoupons = [];
+
+async function loadCoupons() {
+  try {
+    const r = await fetch(`${WEB_APP_URL}?action=getCoupons`);
+    adminCoupons = await r.json();
+    if (!Array.isArray(adminCoupons)) adminCoupons = [];
+    renderCoupons();
+  } catch (e) { console.error("Coupons Error:", e); }
+}
+
+function renderCoupons() {
+  const wrap = document.getElementById("couponsTable");
+  if (!wrap) return;
+  if (!adminCoupons.length) { wrap.innerHTML = '<p style="padding:12px">لا توجد كوبونات بعد</p>'; return; }
+  wrap.innerHTML = adminCoupons.map((c) => {
+    const isActive = String(c.active).toUpperCase() === "TRUE";
+    const val = c.type === "percent" ? `${c.value}%` : `${c.value} ج`;
+    return `<div class="coupon-row">
+      <span class="coupon-code">${c.code}</span>
+      <span>${val}</span>
+      <span>حد أدنى: ${(typeof c.minOrder === "string" && c.minOrder.includes("T")) ? 0 : (c.minOrder || 0)}</span>
+      <span>${c.expireDate ? "ينتهي: " + c.expireDate : "بلا انتهاء"}</span>
+      <span>${isActive ? "مفعّل" : "موقوف"}</span>
+      <button class="cp-toggle" data-id="${c.id}" data-active="${isActive ? 1 : 0}">${isActive ? "إيقاف" : "تفعيل"}</button>
+      <button class="cp-delete" data-id="${c.id}">حذف</button>
+    </div>`;
+  }).join("");
+  wrap.querySelectorAll(".cp-toggle").forEach(b => b.addEventListener("click", () => toggleCouponAdmin(b.dataset.id, b.dataset.active !== "1")));
+  wrap.querySelectorAll(".cp-delete").forEach(b => b.addEventListener("click", () => deleteCouponAdmin(b.dataset.id)));
+}
+
+async function saveCouponAdmin() {
+  const code = document.getElementById("couponCodeInput").value.trim();
+  const type = document.getElementById("couponTypeSelect").value;
+  const value = Number(document.getElementById("couponValueInput").value);
+  const minOrder = Number(document.getElementById("couponMinOrderInput").value) || 0;
+  const expireDate = document.getElementById("couponExpireInput").value || "";
+  if (!code || !(value > 0)) { meskAlert.fire({ icon: "warning", title: "اكتب كود الكوبون وقيمته" }); return; }
+  if (type === "percent" && value > 100) { meskAlert.fire({ icon: "warning", title: "النسبة لا تتجاوز 100%" }); return; }
+  await fetch(WEB_APP_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "saveCoupon", code, type, value, minOrder: minOrder > 0 ? minOrder : "", expireDate }) });
+  meskAlert.fire({ icon: "success", title: "تم حفظ الكوبون" });
+  document.getElementById("couponCodeInput").value = "";
+  document.getElementById("couponValueInput").value = "";
+  await loadCoupons();
+}
+
+async function toggleCouponAdmin(id, active) {
+  await fetch(WEB_APP_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "toggleCoupon", id, active }) });
+  await loadCoupons();
+}
+
+async function deleteCouponAdmin(id) {
+  const c = await meskAlert.fire({ icon: "warning", title: "حذف الكوبون؟", showCancelButton: true, confirmButtonText: "حذف", cancelButtonText: "إلغاء" });
+  if (!c.isConfirmed) return;
+  await fetch(WEB_APP_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "deleteCoupon", id }) });
+  meskAlert.fire({ icon: "success", title: "تم حذف الكوبون" });
+  await loadCoupons();
+}
+
+// ===== Customers management (v78) =====
+let adminCustomers = [];
+
+async function loadCustomers() {
+  try {
+    const r = await fetch(`${WEB_APP_URL}?action=getCustomers`);
+    adminCustomers = await r.json();
+    if (!Array.isArray(adminCustomers)) adminCustomers = [];
+    renderCustomers();
+  } catch (e) { console.error("Customers Error:", e); }
+}
+
+function renderCustomers() {
+  const wrap = document.getElementById("customersTable");
+  if (!wrap) return;
+  const q = (document.getElementById("customersSearch").value || "").trim().toLowerCase();
+  const list = adminCustomers.filter(c => !q || String(c.name).toLowerCase().includes(q) || String(c.phone).includes(q));
+  if (!list.length) { wrap.innerHTML = '<p style="padding:12px">لا يوجد عملاء مطابقون</p>'; return; }
+  wrap.innerHTML = list.map((c) => `<div class="coupon-row">
+      <span>${c.name || "-"}</span>
+      <span>${String(c.phone || "-").replace(/^'+/, "")}</span>
+      <span>${c.ordersCount || 0} طلب</span>
+      <span>${(c.totalSpent || 0) >= 1e12 ? "—" : (c.totalSpent || 0) + " ج"}</span>
+      <span>${c.hasPassword ? "مسجل" : "ضيف"}</span>
+      ${c.hasPassword ? `<button class="cp-reset" data-id="${c.id}">إعادة تعيين كلمة المرور</button>` : ""}
+    </div>`).join("");
+  wrap.querySelectorAll(".cp-reset").forEach(b => b.addEventListener("click", () => resetCustomerPasswordAdmin(b.dataset.id)));
+}
+
+async function resetCustomerPasswordAdmin(id) {
+  const res = await Swal.fire({ title: "كلمة مرور جديدة", input: "password", inputAttributes: { minlength: 6 }, showCancelButton: true, confirmButtonText: "تعيين", cancelButtonText: "إلغاء", inputValidator: (v) => { if (!v || v.length < 6) return "6 أحرف على الأقل"; } });
+  if (!res.isConfirmed) return;
+  const r = await fetch(WEB_APP_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "adminResetCustomerPassword", customerId: id, newPassword: res.value }) });
+  const jd = await r.json();
+  if (jd && jd.success) meskAlert.fire({ icon: "success", title: "تم تعيين كلمة المرور الجديدة" });
+  else meskAlert.fire({ icon: "error", title: "فشل التعيين" });
+}
