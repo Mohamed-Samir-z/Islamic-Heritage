@@ -86,6 +86,38 @@ document.addEventListener("DOMContentLoaded", initApp);
 
 let favorites = [];
 
+let _sfCache = null;
+let _sfPromise = null;
+async function fetchStorefront(force) {
+  const now = Date.now();
+  if (!force && _sfCache && now - _sfCache.ts < 300000) return _sfCache.data;
+  if (!force) {
+    try {
+      const raw = sessionStorage.getItem("mesk_storefront_v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.ts && now - parsed.ts < 300000 && parsed.data) {
+          _sfCache = parsed;
+          return parsed.data;
+        }
+      }
+    } catch (e) {}
+  }
+  if (_sfPromise) return _sfPromise;
+  _sfPromise = (async () => {
+    try {
+      const r = await fetch(`${WEB_APP_URL}?action=getStorefront`);
+      const data = await r.json();
+      _sfCache = { ts: Date.now(), data };
+      try { sessionStorage.setItem("mesk_storefront_v1", JSON.stringify(_sfCache)); } catch (e) {}
+      return data;
+    } finally {
+      _sfPromise = null;
+    }
+  })();
+  return _sfPromise;
+}
+
 function getCustomer() {
   return JSON.parse(localStorage.getItem("mesk_customer"));
 }
@@ -139,9 +171,9 @@ function smartSearch(text, query) {
 
 async function loadProducts() {
   try {
-    const response = await fetch(WEB_APP_URL);
+    const sfData = await fetchStorefront();
 
-    const data = await response.json();
+    const data = sfData.products || [];
 
     products = data.map((item) => ({
       id: Number(item.id),
@@ -518,11 +550,13 @@ function addToCart(product) {
     existingItem.imageUrl = product.imageUrl;
     existingItem.name = product.name;
     existingItem.price = product.price;
+    existingItem.discount = Number(product.discount || 0);
   } else {
     cart.push({
       id: product.id,
       name: product.name,
       price: product.price,
+      discount: Number(product.discount || 0),
       imageUrl: product.imageUrl,
       qty: 1,
     });
@@ -1002,8 +1036,8 @@ document.getElementById("sendOrderBtn").addEventListener("click", () => {
 
 async function loadBanner() {
   try {
-    const response = await fetch(`${WEB_APP_URL}?action=getBanner`);
-    const banner = await response.json();
+    const sfData = await fetchStorefront();
+    const banner = sfData.banner || {};
 
     const heroImage = document.getElementById("heroBannerImage");
     const heroTitle = document.querySelector(".hero-content h1");
@@ -1058,8 +1092,8 @@ async function loadBanner() {
 }
 
 async function loadCategories() {
-  const response = await fetch(`${WEB_APP_URL}?action=getCategories`);
-  return await response.json();
+  const sfData = await fetchStorefront();
+  return sfData.categories || [];
 }
 
 async function renderCategories() {
@@ -1417,13 +1451,12 @@ async function initApp() {
   try {
     updateCartUI();
 
-    await loadFavorites();
-
-    await loadProducts();
-
-    await loadBanner();
-
-    await loadUnreadNotifications();
+    await Promise.all([
+      loadFavorites(),
+      loadProducts(),
+      loadBanner(),
+      loadUnreadNotifications(),
+    ]);
 
     bindStaticEvents();
   } catch (err) {
