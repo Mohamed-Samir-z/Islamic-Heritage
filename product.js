@@ -26,9 +26,22 @@ loadProduct();
 
 async function loadProduct() {
   try {
-    const response = await fetch(WEB_APP_URL);
-
-    products = await response.json();
+    let cachedProducts = null;
+    try {
+      const raw = sessionStorage.getItem("mesk_storefront_v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.ts && Date.now() - parsed.ts < 300000 && parsed.data && Array.isArray(parsed.data.products)) {
+          cachedProducts = parsed.data.products;
+        }
+      }
+    } catch (e) {}
+    if (cachedProducts) {
+      products = cachedProducts;
+    } else {
+      const response = await fetch(WEB_APP_URL);
+      products = await response.json();
+    }
 
     product = products.find((item) => Number(item.id) === productId);
 
