@@ -28,6 +28,7 @@ var SESSIONS_SHEET_NAME = "Sessions";
 function sha256Hex_(s){var b=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(s),Utilities.Charset.UTF_8);for(var i=0;i<b.length;i++){var v=(b[i]<0?b[i]+256:b[i]).toString(16);b[i]=v.length==1?"0"+v:v}return b.join("")}
 function denied_(){return ContentService.createTextOutput(JSON.stringify({success:false,error:"unauthorized"})).setMimeType(ContentService.MimeType.JSON)}
 function adminTokenValid_(t){if(!t)return false;var k="adm_"+sha256Hex_(t);var c=CacheService.getScriptCache();if(c.get(k)){c.put(k,"1",1800);return true}return false}
+function invalidateStorefrontCache_(){ try { CacheService.getScriptCache().remove("storefront_v1"); } catch(e){} }
 function rlCheck_(key,max){var n=CacheService.getScriptCache().get("rl_"+key);return !!(n&&parseInt(n,10)>=max)}
 function rlHit_(key,windowSec){var c=CacheService.getScriptCache();var n=c.get("rl_"+key);c.put("rl_"+key,n?String(parseInt(n,10)+1):"1",windowSec)}
 function sessionsSheet_(){var ss=SpreadsheetApp.getActiveSpreadsheet();var sh=ss.getSheetByName(SESSIONS_SHEET_NAME);if(!sh){sh=ss.insertSheet(SESSIONS_SHEET_NAME);sh.appendRow(["tokenHash","customerId","phone","expiresAt"])}return sh}
@@ -36,11 +37,17 @@ function customerSession_(t){if(!t)return null;var h=sha256Hex_(t);var rows=sess
 // ===== end security layer =====
 
 function doGet(e) {
+  const action = e?.parameter?.action || "products";
+  if (action === "getStorefront") {
+    var sfHit_ = CacheService.getScriptCache().get("storefront_v1");
+    if (sfHit_) {
+      return ContentService.createTextOutput(sfHit_).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(PRODUCTS_SHEET);
   const data = sheet.getDataRange().getValues();
   const result = [];
 
-  const action = e?.parameter?.action || "products";
   if (ADMIN_GET_ACTIONS[action] && !adminTokenValid_(e.parameter.token)) return denied_();
   if (CUST_GET_ACTIONS[action]) {
     var cs_ = customerSession_(e.parameter.token);
@@ -94,8 +101,10 @@ function doGet(e) {
         break;
       }
     }
+    var sfPayload_ = JSON.stringify({ products: sfProducts_, categories: sfCats_, banner: sfBanner_ });
+    try { CacheService.getScriptCache().put("storefront_v1", sfPayload_, 120); } catch (sfCe_) {}
     return ContentService
-      .createTextOutput(JSON.stringify({ products: sfProducts_, categories: sfCats_, banner: sfBanner_ }))
+      .createTextOutput(sfPayload_)
       .setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -1090,6 +1099,8 @@ function findCustomerByPhone(phone){
 
 function updateStock(items){
 
+  invalidateStorefrontCache_();
+
   const sheet =
     SpreadsheetApp
       .getActiveSpreadsheet()
@@ -1203,6 +1214,8 @@ function addOrderLog(orderId, oldStatus, newStatus, message){
 }
 
 function restoreStock(orderItems){
+
+  invalidateStorefrontCache_();
 
   const sheet =
       SpreadsheetApp
@@ -1334,7 +1347,7 @@ function doPost(e) {
       if (!ocOwn) { output.setContent(JSON.stringify({success:false,error:"unauthorized"})); return output; }
     }
     if(action === "addReview"){
-      if (rlCheck_("review_global",10)) { output.setContent(JSON.stringify({success:false, message:"عدد التقييمات كبير، حاول لاحقاً"})); return output; }
+      if (rlCheck_("review_global",100)) { output.setContent(JSON.stringify({success:false, message:"عدد التقييمات كبير، حاول لاحقاً"})); return output; }
       const rvName = String(data.name||"").trim().slice(0,60);
       const rvComment = String(data.comment||"").trim().slice(0,500);
       const rvRating = Math.max(1, Math.min(5, parseInt(data.rating,10) || 0));
@@ -1344,6 +1357,10 @@ function doPost(e) {
       let rvExists = false;
       for (let rpi=1; rpi<pRows.length; rpi++){ if (String(pRows[rpi][0]) === rvPid) { rvExists = true; break; } }
       if (!rvExists) { output.setContent(JSON.stringify({success:false, message:"المنتج غير موجود"})); return output; }
+      const rvPKey = "review_prod_" + rvPid;
+      if (rlCheck_(rvPKey,3) || rlCheck_(rvPKey+"_d",12)) { output.setContent(JSON.stringify({success:false, message:"وصل هذا المنتج لحد التقييمات حالياً، حاول لاحقاً"})); return output; }
+      const rvNKey = "review_name_" + sha256Hex_(rvName.toLowerCase());
+      if (rlCheck_(rvNKey,5)) { output.setContent(JSON.stringify({success:false, message:"تم استلام تقييمات كثيرة بهذا الاسم، حاول لاحقاً"})); return output; }
       const rvKey = "review_" + sha256Hex_(rvPid + "|" + rvName.toLowerCase() + "|" + rvComment);
       if (rlCheck_(rvKey,1)) { output.setContent(JSON.stringify({success:false, message:"تم إرسال هذا التقييم بالفعل"})); return output; }
       const reviewsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(REVIEWS_SHEET);
@@ -1360,11 +1377,15 @@ function doPost(e) {
         )
       ]);
       rlHit_("review_global",3600);
+      rlHit_(rvPKey,3600);
+      rlHit_(rvPKey+"_d",86400);
+      rlHit_(rvNKey,86400);
       rlHit_(rvKey,86400);
       output.setContent(JSON.stringify({success:true}));
       return output;
     }
     if (action === "saveBanner") {
+      invalidateStorefrontCache_();
       const bannersSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(BANNERS_SHEET);
       const rows = bannersSheet.getDataRange().getValues();
 
@@ -1404,6 +1425,7 @@ function doPost(e) {
     }
 
     if(action === "addCategory"){
+      invalidateStorefrontCache_();
       const categoriesSheet =
         SpreadsheetApp
         .getActiveSpreadsheet()
@@ -1427,6 +1449,7 @@ function doPost(e) {
     }
 
     if(action === "updateCategory"){
+      invalidateStorefrontCache_();
       const categoriesSheet =
         SpreadsheetApp
         .getActiveSpreadsheet()
@@ -1465,6 +1488,7 @@ function doPost(e) {
     }
 
     if(action === "deleteCategory"){
+      invalidateStorefrontCache_();
       const categoriesSheet =
         SpreadsheetApp
         .getActiveSpreadsheet()
@@ -2966,6 +2990,7 @@ function doPost(e) {
 
     // إضافة
     if (action === "add") {
+      invalidateStorefrontCache_();
       sheet.appendRow([
         Date.now(),
         data.name,
@@ -2981,6 +3006,7 @@ function doPost(e) {
 
     // تعديل
     if (action === "update") {
+      invalidateStorefrontCache_();
       const rows = sheet.getDataRange().getValues();
 
       for (let i = 1; i < rows.length; i++) {
@@ -3003,6 +3029,7 @@ function doPost(e) {
 
       // حذف مجموعة منتجات
     if (action === "deleteMultiple") {
+      invalidateStorefrontCache_();
 
       const ids = data.ids || [];
 
@@ -3031,6 +3058,7 @@ function doPost(e) {
 
     // حذف
     if (action === "delete") {
+      invalidateStorefrontCache_();
       const rows = sheet.getDataRange().getValues();
       for (let i = 1; i < rows.length; i++) {
         if (String(rows[i][0]) === String(data.id)) {
