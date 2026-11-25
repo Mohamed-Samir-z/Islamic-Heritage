@@ -359,6 +359,71 @@
             
             </div>
     
+            <div class="dashboard-card">
+
+                <div class="dashboard-card-header">
+
+                    <h2>
+
+                        🎟 كوبونات الخصم
+
+                    </h2>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </div>
+
+                <div id="couponsPanel" class="dashboard-panel">
+
+                    <div class="coupon-form">
+
+                        <input id="couponCodeInput" class="admin-search" placeholder="كود الكوبون">
+
+                        <select id="couponTypeSelect" class="admin-search">
+                            <option value="percent">نسبة %</option>
+                            <option value="fixed">مبلغ ثابت</option>
+                        </select>
+
+                        <input id="couponValueInput" class="admin-search" type="number" min="0" placeholder="القيمة">
+
+                        <input id="couponMinOrderInput" class="admin-search" type="number" min="0" placeholder="أقل قيمة طلب (اختياري)">
+
+                        <input id="couponExpireInput" class="admin-search" type="date">
+
+                        <button id="addCouponBtn">+ إضافة كوبون</button>
+
+                    </div>
+
+                    <div id="couponsTable"></div>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <div class="dashboard-card-header">
+
+                    <h2>
+
+                        👥 العملاء
+
+                    </h2>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </div>
+
+                <div id="customersPanel" class="dashboard-panel">
+
+                    <input id="customersSearch" class="admin-search" placeholder="ابحث بالاسم أو الهاتف">
+
+                    <div id="customersTable"></div>
+
+                </div>
+
+            </div>
+
         </div>
 
         <div class="dashboard-stats">
@@ -433,6 +498,15 @@
 
     <div id="toast"></div>
     
+    <style>
+.coupon-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.coupon-form button{padding:10px;border:none;border-radius:10px;background:#d4af37;color:#111;font-weight:bold;cursor:pointer}
+.coupon-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#1e293b;color:#f1f5f9;padding:10px 14px;border-radius:10px;margin-bottom:8px}
+.coupon-row .coupon-code{font-weight:bold;color:#d4af37}
+.coupon-row button{padding:6px 12px;border:none;border-radius:8px;cursor:pointer;font-size:13px}
+.coupon-row .cp-toggle{background:#334155;color:#fff}
+.coupon-row .cp-delete,.coupon-row .cp-reset{background:#7f1d1d;color:#fff}
+</style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="admin.js"></script>
 
