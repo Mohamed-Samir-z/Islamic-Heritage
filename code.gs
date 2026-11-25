@@ -21,7 +21,7 @@ function generateSalt(){
 
 // ===== Security layer v71 (2026-11-25): admin auth, customer sessions, ownership enforcement =====
 var ADMIN_GET_ACTIONS = {getStats:1, getLatestReviews:1, getOrders:1, getOrderLogs:1, getCoupons:1, getCustomers:1};
-var ADMIN_POST_ACTIONS = {saveBanner:1, addCategory:1, updateCategory:1, deleteCategory:1, updatePaymentStatus:1, updateOrderStatus:1, deleteOrder:1, saveCoupon:1, deleteCoupon:1, toggleCoupon:1, add:1, update:1, deleteMultiple:1, delete:1, uploadImage:1, adminResetCustomerPassword:1};
+var ADMIN_POST_ACTIONS = {saveBanner:1, addCategory:1, updateCategory:1, deleteCategory:1, updatePaymentStatus:1, updateOrderStatus:1, deleteOrder:1, saveCoupon:1, deleteCoupon:1, toggleCoupon:1, add:1, update:1, deleteMultiple:1, delete:1, uploadImage:1, adminResetCustomerPassword:1, deleteCustomer:1};
 var CUST_GET_ACTIONS = {getCustomerByPhone:1, getCustomerOrders:1, getAddresses:1, getDefaultAddress:1, getWishlist:1, getFavorites:1, getNotifications:1, getUnreadNotifications:1};
 var CUST_POST_ACTIONS = {saveAddress:1, updateAddress:1, deleteAddress:1, setDefaultAddress:1, changePassword:1, updateCustomerProfile:1, addFavorite:1, removeFavorite:1, markNotificationsRead:1};
 var SESSIONS_SHEET_NAME = "Sessions";
@@ -1068,24 +1068,23 @@ function findCustomerByPhone(phone){
 
   const targetPhone = normalizePhone(phone);
   
+  let firstGuest = null;
   for(let i=1;i<rows.length;i++){
 
 
-    if(normalizePhone(rows[i][2]) === targetPhone){
-
+    if(normalizePhone(rows[i][2]) === targetPhone && String(rows[i][3]||"").trim()){
       return{
-
         row:i+1,
-
         id:rows[i][0]
-
       };
-
+    }
+    if(normalizePhone(rows[i][2]) === targetPhone && !firstGuest){
+      firstGuest = { row:i+1, id:rows[i][0] };
     }
 
   }
 
-  return null;
+  return firstGuest;
 
 }
 
@@ -1868,21 +1867,7 @@ function doPost(e) {
               const salt =
                   rows[i][4];
 
-              if(!savedHash || !salt){
-
-                output.setContent(JSON.stringify({
-
-                    success:false,
-
-                    needPassword:true,
-
-                    message:"هذا الحساب يحتاج إلى إنشاء كلمة مرور"
-
-                }));
-
-                return output;
-
-              }
+          if(!savedHash || !salt){ continue; }
 
               const enteredHash =
                   hashPassword(data.password,salt);
@@ -1972,7 +1957,7 @@ function doPost(e) {
 
       for(let i=1;i<rows.length;i++){
 
-          if(normalizePhone(rows[i][2])===phone){
+          if(normalizePhone(rows[i][2])===phone && String(rows[i][3]||"").trim()){
 
               output.setContent(JSON.stringify({
 
